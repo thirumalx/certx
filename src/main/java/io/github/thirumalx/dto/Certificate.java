@@ -2,12 +2,14 @@ package io.github.thirumalx.dto;
 
 import java.time.LocalDateTime;
 
+import lombok.Builder;
 import lombok.Data;
 
 /**
  * @author Thirumal
  */
 @Data
+@Builder
 public class Certificate {
 
     private String serialNumber;
