@@ -9,11 +9,13 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
+import io.github.thirumalx.model.Tie;
+
 /**
  * @author Thirumal M
  * Tie tables usually contain only foreign keys referencing two anchor tables to establish a many-to-many relationship. 
  */
-public abstract class GenericTieDao<T> {
+public abstract class GenericTieDao<T extends Tie> {
     
     private final JdbcClient jdbc;
     private final String tableName;

@@ -9,11 +9,13 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 
+import io.github.thirumalx.model.Anchor;
+
 /**
  * @author Thirumal M
  * Anchor tables usually contain only the anchor ID (auto-generated PK) and optionally other metadata.
  */
-public abstract class GenericAnchorDao<T> {
+public abstract class GenericAnchorDao<T extends Anchor> {
 
 	private final JdbcClient jdbc;
 	private final String tableName;
