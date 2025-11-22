@@ -1,4 +1,4 @@
-package io.github.thirumalx.dao.generic;
+package io.github.thirumalx.dao;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,13 +13,13 @@ import io.github.thirumalx.model.Tie;
  * @author Thirumal M
  * Tie tables usually contain only foreign keys referencing two anchor tables to establish a many-to-many relationship. 
  */
-public abstract class GenericTieDao<T extends Tie> {
+public abstract class TieDao<T extends Tie> {
 
     private final JdbcClient jdbc;
     private final String tableName;
     private final String[] columns;
 
-    protected GenericTieDao(JdbcClient jdbc, String tableName, String... columns) {
+    protected TieDao(JdbcClient jdbc, String tableName, String... columns) {
         this.jdbc = jdbc;
         this.tableName = tableName;
         this.columns = columns;

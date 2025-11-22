@@ -1,5 +1,7 @@
 package io.github.thirumalx.controller;
 
+import java.net.URI;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +23,13 @@ public class CertificateContoller {
 
     public CertificateContoller(CertificateService certificateService) {
         this.certificateService = certificateService;
+    }
+
+    @PostMapping(value = "/")
+    public ResponseEntity<Certificate> save(@RequestBody Certificate  certificate) {
+        certificate = certificateService.save(certificate);
+        return ResponseEntity.created(URI.create("/certificate/" + certificate.getSerialNumber()))
+                .body(certificate);
     }
 
     @PostMapping(value = "/fetch-detail")

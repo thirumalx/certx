@@ -1,4 +1,4 @@
-package io.github.thirumalx.dao.generic;
+package io.github.thirumalx.dao;
 
 import java.util.List;
 
@@ -11,13 +11,13 @@ import org.springframework.jdbc.support.KeyHolder;
  * @author Thirumal M
  * Attribute tables usually contain attribute ID (PK), anchor ID (FK), and attribute value and optionally other metadata.
  */
-public abstract class GenericAttributeDao<T> {
+public abstract class AttributeDao<T> {
     
     private final JdbcClient jdbc;
     private final String tableName;
     private final String fkColumn;
 
-    protected GenericAttributeDao(JdbcClient jdbc, String tableName, String fkColumn) {
+    protected AttributeDao(JdbcClient jdbc, String tableName, String fkColumn) {
         this.jdbc = jdbc;
         this.tableName = tableName;
         this.fkColumn = fkColumn;
