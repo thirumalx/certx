@@ -1,6 +1,6 @@
 package io.github.thirumalx.model;
 
-public interface Attribute<T> {
+public sealed interface Attribute<T> permits HistorizedAttribute, SimpleAttribute{
     
     public static final Long METADATA_ACTIVE = 1L;
 

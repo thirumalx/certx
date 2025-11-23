@@ -1,5 +1,6 @@
 package io.github.thirumalx.service;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import org.slf4j.LoggerFactory;
@@ -42,6 +43,7 @@ public class ApplicationService {
         Long applicationNameAttributeId = applicationNameAttributeDao.insert(
             applicationId,
             application.getApplicationName(),
+            Instant.now(),
             Attribute.METADATA_ACTIVE
         );
         logger.info("Added application name attribute with ID: {}", applicationNameAttributeId);
