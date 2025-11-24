@@ -13,7 +13,15 @@ import io.github.thirumalx.dto.Application;
 public class ApplicationViewDao extends ViewDao<Application> {
 
     protected ApplicationViewDao(JdbcClient jdbc) {
-        super(jdbc, "certx.lAP_Application", Application.class);
+        super(jdbc, Application.class);
+    }
+
+    public java.util.Optional<Application> findLatestById(Long id) {
+        return findById("certx.lAP_Application", "AP_ID", id);
+    }
+
+    public java.util.Optional<Application> findNowById(Long id) {
+        return findById("certx.nAP_Application", "AP_ID", id);
     }
 
     @Override
