@@ -29,6 +29,7 @@ public class ApplicationViewDao extends ViewDao<Application> {
         return (rs, rowNum) -> Application.builder()
                 .id(rs.getLong("AP_ID"))
                 .applicationName(rs.getString("AP_NAM_Application_Name"))
+                .uniqueId(rs.getString("AP_UID_Application_UniqueId"))
                 .build();
     }
 

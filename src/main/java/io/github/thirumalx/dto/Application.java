@@ -11,7 +11,8 @@ import lombok.Data;
 @AllArgsConstructor
 @Builder
 public class Application {
-    
+
     private Long id;
     private String applicationName;
+    private String uniqueId;
 }
