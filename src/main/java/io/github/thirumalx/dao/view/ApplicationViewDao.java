@@ -24,6 +24,20 @@ public class ApplicationViewDao extends ViewDao<Application> {
         return findById("certx.nAP_Application", "AP_ID", id);
     }
 
+    public java.util.List<Application> listNow(int page, int size) {
+        return jdbc.sql("SELECT * FROM certx.nAP_Application ORDER BY AP_ID LIMIT :limit OFFSET :offset")
+                .param("limit", size)
+                .param("offset", page * size)
+                .query(rowMapper())
+                .list();
+    }
+
+    public long countNow() {
+        return jdbc.sql("SELECT count(*) FROM certx.nAP_Application")
+                .query(Long.class)
+                .single();
+    }
+
     @Override
     protected RowMapper<Application> rowMapper() {
         return (rs, rowNum) -> Application.builder()

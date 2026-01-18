@@ -6,7 +6,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 
 public abstract class ViewDao<T> {
 
-    private final JdbcClient jdbc;
+    protected final JdbcClient jdbc;
 
     protected ViewDao(JdbcClient jdbc, Class<T> type) {
         this.jdbc = jdbc;

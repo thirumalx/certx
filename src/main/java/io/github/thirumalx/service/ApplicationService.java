@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.github.thirumalx.dao.anchor.ApplicationAnchorDao;
+import io.github.thirumalx.dao.view.ApplicationViewDao;
 import io.github.thirumalx.dao.attribute.ApplicationNameAttributeDao;
 import io.github.thirumalx.dao.attribute.ApplicationUniqueIdAttributeDao;
 import io.github.thirumalx.dto.Application;
@@ -33,13 +34,16 @@ public class ApplicationService {
     private final ApplicationAnchorDao applicationAnchorDao;
     private final ApplicationNameAttributeDao applicationNameAttributeDao;
     private final ApplicationUniqueIdAttributeDao applicationUniqueIdAttributeDao;
+    private final ApplicationViewDao applicationViewDao;
 
     public ApplicationService(ApplicationAnchorDao applicationAnchorDao,
             ApplicationNameAttributeDao applicationNameAttributeDao,
-            ApplicationUniqueIdAttributeDao applicationUniqueIdAttributeDao) {
+            ApplicationUniqueIdAttributeDao applicationUniqueIdAttributeDao,
+            ApplicationViewDao applicationViewDao) {
         this.applicationAnchorDao = applicationAnchorDao;
         this.applicationNameAttributeDao = applicationNameAttributeDao;
         this.applicationUniqueIdAttributeDao = applicationUniqueIdAttributeDao;
+        this.applicationViewDao = applicationViewDao;
     }
 
     @Transactional
@@ -59,27 +63,27 @@ public class ApplicationService {
                 applicationNameAttributeId.entrySet().stream().toList());
         // Add UniqueId
         if (application.getUniqueId() != null) {
-        	try {
-	            Map<String, Object> applicationUniqueIdAttributeId = applicationUniqueIdAttributeDao.insert(
-	                    applicationId,
-	                    application.getUniqueId(),
-	                    Attribute.METADATA_ACTIVE);
-	            logger.info("Added application uniqueId attribute with ID: {}",
-	                    applicationUniqueIdAttributeId.entrySet().stream().toList());
-        	} catch (DuplicateKeyException duplicateKeyException) {
-        		throw new io.github.thirumalx.exception.DuplicateKeyException("Application ID must be unique...");
-        	}
-            
+            try {
+                Map<String, Object> applicationUniqueIdAttributeId = applicationUniqueIdAttributeDao.insert(
+                        applicationId,
+                        application.getUniqueId(),
+                        Attribute.METADATA_ACTIVE);
+                logger.info("Added application uniqueId attribute with ID: {}",
+                        applicationUniqueIdAttributeId.entrySet().stream().toList());
+            } catch (DuplicateKeyException duplicateKeyException) {
+                throw new io.github.thirumalx.exception.DuplicateKeyException("Application ID must be unique...");
+            }
+
         }
         return application;
     }
-    
+
     @Transactional
-	public Application update(Long id, @Valid Application application) {
-		logger.debug("Initiated Updating application {} with details {}", id, application);
-		
-		return getApplication(id);
-	}
+    public Application update(Long id, @Valid Application application) {
+        logger.debug("Initiated Updating application {} with details {}", id, application);
+
+        return getApplication(id);
+    }
 
     public Application getApplication(Long id) {
         logger.info("Fetching application with ID: {}", id);
@@ -91,11 +95,12 @@ public class ApplicationService {
         return Application.builder().id(applicationAnchor.get().getId()).build();
     }
 
-	public PageResponse<Application> listApplication(PageRequest pageRequest) {
-		logger.debug("List application from the page {} to offset {}", pageRequest.page(), pageRequest.size());
-		
-		return null;
-	}
-
+    public PageResponse<Application> listApplication(PageRequest pageRequest) {
+        logger.debug("Listing applications for page {} with size {}", pageRequest.page(), pageRequest.size());
+        List<Application> applications = applicationViewDao.listNow(pageRequest.page(), pageRequest.size());
+        long totalElements = applicationViewDao.countNow();
+        int totalPages = (int) Math.ceil((double) totalElements / pageRequest.size());
+        return new PageResponse<>(pageRequest.page(), pageRequest.size(), applications, totalElements, totalPages);
+    }
 
 }
