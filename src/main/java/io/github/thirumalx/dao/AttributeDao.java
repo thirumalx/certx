@@ -79,6 +79,18 @@ public abstract class AttributeDao<T> {
                 .query(rowMapper())
                 .list();
     }
+    /**
+     * Delete attributes by application (anchor) ID
+     * Deletes all attributes associated with the given application ID. So delete only when necessary.
+     *  - Understand the implications of data loss.
+     *  - Use if it;s unqiue attribute that needs to be replaced.
+     * @param id
+     */
+    public void deleteByApplicationId(Long id) {
+        jdbc.sql("DELETE FROM " + tableName + " WHERE " + fkColumn + " = :id")
+                .param("id", id)
+                .update();
+    }
 
     protected abstract RowMapper<T> rowMapper();
 }

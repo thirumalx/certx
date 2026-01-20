@@ -12,12 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.github.thirumalx.dao.anchor.ApplicationAnchorDao;
-import io.github.thirumalx.dao.view.ApplicationViewDao;
 import io.github.thirumalx.dao.attribute.ApplicationNameAttributeDao;
 import io.github.thirumalx.dao.attribute.ApplicationUniqueIdAttributeDao;
+import io.github.thirumalx.dao.view.ApplicationViewDao;
 import io.github.thirumalx.dto.Application;
 import io.github.thirumalx.dto.PageRequest;
 import io.github.thirumalx.dto.PageResponse;
+import io.github.thirumalx.exception.ResourceNotFoundException;
 import io.github.thirumalx.model.Anchor;
 import io.github.thirumalx.model.Attribute;
 import io.github.thirumalx.model.anchor.ApplicationAnchor;
@@ -81,7 +82,35 @@ public class ApplicationService {
     @Transactional
     public Application update(Long id, @Valid Application application) {
         logger.debug("Initiated Updating application {} with details {}", id, application);
+        Application existingApplication = getApplication(id);
+        if (existingApplication == null) {
+            logger.debug("Application with ID: {} not found for update", id);
+            throw new ResourceNotFoundException("Application not found for update");
+        }
+        application.setId(id);
+        Map<String, Object> applicationNameAttributeId = applicationNameAttributeDao.insert(
+                id,
+                application.getApplicationName(),
+                Instant.now(),
+                Attribute.METADATA_ACTIVE);
+        logger.info("Added application name attribute with ID: {}",
+                applicationNameAttributeId.entrySet().stream().toList());
+        // Update UniqueId
+        if (application.getUniqueId() != null && !application.getUniqueId().equals(existingApplication.getUniqueId())) {
+            // Remove old UniqueId if exists
+            applicationUniqueIdAttributeDao.deleteByApplicationId(id);
+            try {
+                Map<String, Object> applicationUniqueIdAttributeId = applicationUniqueIdAttributeDao.insert(
+                        id,
+                        application.getUniqueId(),
+                        Attribute.METADATA_ACTIVE);
+                logger.info("Added application uniqueId attribute with ID: {}",
+                        applicationUniqueIdAttributeId.entrySet().stream().toList());
+            } catch (DuplicateKeyException duplicateKeyException) {
+                throw new io.github.thirumalx.exception.DuplicateKeyException("Application ID must be unique...");
+            }
 
+        }
         return getApplication(id);
     }
 
