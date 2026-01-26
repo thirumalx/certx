@@ -21,7 +21,6 @@ import io.github.thirumalx.dto.PageResponse;
 import io.github.thirumalx.exception.ResourceNotFoundException;
 import io.github.thirumalx.model.Anchor;
 import io.github.thirumalx.model.Attribute;
-import io.github.thirumalx.model.anchor.ApplicationAnchor;
 import jakarta.validation.Valid;
 
 /**
@@ -88,6 +87,10 @@ public class ApplicationService {
             throw new ResourceNotFoundException("Application not found for update");
         }
         application.setId(id);
+        if (application.equals(existingApplication)) {
+            logger.debug("No changes detected for application with ID: {}", id);
+            throw new IllegalArgumentException("No changes detected to update");
+        }
         Map<String, Object> applicationNameAttributeId = applicationNameAttributeDao.insert(
                 id,
                 application.getApplicationName(),
@@ -109,19 +112,18 @@ public class ApplicationService {
             } catch (DuplicateKeyException duplicateKeyException) {
                 throw new io.github.thirumalx.exception.DuplicateKeyException("Application ID must be unique...");
             }
-
         }
         return getApplication(id);
     }
 
     public Application getApplication(Long id) {
         logger.info("Fetching application with ID: {}", id);
-        Optional<ApplicationAnchor> applicationAnchor = applicationAnchorDao.findById(id);
-        if (applicationAnchor.isEmpty()) {
+        Optional<Application> applicationOptional = applicationViewDao.findNowById(id);
+        if (applicationOptional.isEmpty()) {
             logger.debug("Application with ID: {} not found", id);
             return null;
         }
-        return Application.builder().id(applicationAnchor.get().getId()).build();
+        return applicationOptional.get();
     }
 
     public PageResponse<Application> listApplication(PageRequest pageRequest) {
@@ -130,6 +132,17 @@ public class ApplicationService {
         long totalElements = applicationViewDao.countNow();
         int totalPages = (int) Math.ceil((double) totalElements / pageRequest.size());
         return new PageResponse<>(pageRequest.page(), pageRequest.size(), applications, totalElements, totalPages);
+    }
+
+    public void deleteApplication(Long id) {
+        logger.info("Deleting application with ID: {}", id);
+        Application existingApplication = getApplication(id);
+        if (existingApplication == null) {
+            logger.debug("Application with ID: {} not found for deletion", id);
+            throw new ResourceNotFoundException("Application not found for deletion");
+        }
+        applicationAnchorDao.delete(id);
+        logger.info("Deleted application with ID: {}", id);
     }
 
 }
