@@ -14,6 +14,8 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.core.simple.JdbcClient.StatementSpec;
 
 import io.github.thirumalx.dto.Application;
+import io.github.thirumalx.model.Knot;
+
 import java.util.List;
 
 class ApplicationViewDaoTest {
@@ -81,7 +83,7 @@ class ApplicationViewDaoTest {
         when(mappedQuerySpec.list()).thenReturn(expectedApps);
 
         ApplicationViewDao dao = new ApplicationViewDao(jdbcClient);
-        List<Application> result = dao.listNow(0, 10);
+        List<Application> result = dao.listNow(Knot.ACTIVE, 0, 10);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getApplicationName()).isEqualTo("Test App");
@@ -93,7 +95,8 @@ class ApplicationViewDaoTest {
         JdbcClient jdbcClient = mock(JdbcClient.class);
         StatementSpec statementSpec = mock(StatementSpec.class);
 
-        when(jdbcClient.sql(eq("SELECT count(*) FROM certx.nAP_Application"))).thenReturn(statementSpec);
+        when(jdbcClient.sql(eq("SELECT count(*) FROM certx.nAP_Application WHERE AP_STA_STA_Status = 1")))
+                .thenReturn(statementSpec);
 
         // Need to mock the single() call.
         JdbcClient.MappedQuerySpec<Long> mappedQuerySpecLong = mock(JdbcClient.MappedQuerySpec.class);
@@ -101,7 +104,7 @@ class ApplicationViewDaoTest {
         when(mappedQuerySpecLong.single()).thenReturn(10L);
 
         ApplicationViewDao dao = new ApplicationViewDao(jdbcClient);
-        long result = dao.countNow();
+        long result = dao.countNow(Knot.ACTIVE);
 
         assertThat(result).isEqualTo(10L);
     }
