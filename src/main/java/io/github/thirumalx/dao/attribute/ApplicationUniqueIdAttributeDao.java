@@ -15,7 +15,7 @@ public class ApplicationUniqueIdAttributeDao extends AttributeDao<ApplicationUni
 
     protected ApplicationUniqueIdAttributeDao(JdbcClient jdbc) {
         super(jdbc, "certx.ap_uid_application_uniqueid", "ap_uid_ap_id", "ap_uid_application_uniqueid",
-                "metadata_ap_uid");
+                "ap_uid_changedat", "metadata_ap_uid");
     }
 
     @Override
@@ -23,9 +23,8 @@ public class ApplicationUniqueIdAttributeDao extends AttributeDao<ApplicationUni
         return (rs, rowNum) -> new ApplicationUniqueIdAttribute(
                 rs.getLong("ap_uid_ap_id"),
                 rs.getString("ap_uid_application_uniqueid"),
-                rs.getLong("metadata_ap_uid"));
+                rs.getLong("metadata_ap_uid"),
+                rs.getTimestamp("ap_uid_changedat").toInstant());
     }
-
-
 
 }

@@ -72,6 +72,7 @@ public class ApplicationService {
                 Map<String, Object> applicationUniqueIdAttributeId = applicationUniqueIdAttributeDao.insert(
                         applicationId,
                         application.getUniqueId(),
+                        Instant.now(),
                         Attribute.METADATA_ACTIVE);
                 logger.info("Added application uniqueId attribute with ID: {}",
                         applicationUniqueIdAttributeId.entrySet().stream().toList());

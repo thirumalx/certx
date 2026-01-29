@@ -1,6 +1,8 @@
 package io.github.thirumalx.model.attribute;
 
-import io.github.thirumalx.model.SimpleAttribute;
+import java.time.Instant;
+
+import io.github.thirumalx.model.HistorizedAttribute;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,11 +13,12 @@ import lombok.Data;
 @Data
 @Builder
 @AllArgsConstructor
-public class ApplicationUniqueIdAttribute implements SimpleAttribute<String> {
+public class ApplicationUniqueIdAttribute implements HistorizedAttribute<String> {
 
     private Long apUidApId;
     private String apUidApplicationUniqueId;
     private Long metadataApUid;
+    private Instant changedAt;
 
     @Override
     public Long getAnchorId() {
@@ -30,6 +33,11 @@ public class ApplicationUniqueIdAttribute implements SimpleAttribute<String> {
     @Override
     public Long getMetadataId() {
         return metadataApUid;
+    }
+
+    @Override
+    public Instant changedAt() {
+        return changedAt;
     }
 
 }
