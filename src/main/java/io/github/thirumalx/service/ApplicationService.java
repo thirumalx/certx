@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import io.github.thirumalx.dao.anchor.ApplicationAnchorDao;
 import io.github.thirumalx.dao.attribute.ApplicationNameAttributeDao;
+import io.github.thirumalx.dao.attribute.ApplicationStatusAttributeDao;
 import io.github.thirumalx.dao.attribute.ApplicationUniqueIdAttributeDao;
 import io.github.thirumalx.dao.view.ApplicationViewDao;
-import io.github.thirumalx.dao.attribute.ApplicationStatusAttributeDao;
 import io.github.thirumalx.dto.Application;
 import io.github.thirumalx.dto.PageRequest;
 import io.github.thirumalx.dto.PageResponse;
@@ -67,19 +67,16 @@ public class ApplicationService {
         logger.info("Added application name attribute with ID: {}",
                 applicationNameAttributeId.entrySet().stream().toList());
         // Add UniqueId
-        if (application.getUniqueId() != null) {
-            try {
-                Map<String, Object> applicationUniqueIdAttributeId = applicationUniqueIdAttributeDao.insert(
-                        applicationId,
-                        application.getUniqueId(),
-                        Instant.now(),
-                        Attribute.METADATA_ACTIVE);
-                logger.info("Added application uniqueId attribute with ID: {}",
-                        applicationUniqueIdAttributeId.entrySet().stream().toList());
-            } catch (DuplicateKeyException duplicateKeyException) {
-                throw new io.github.thirumalx.exception.DuplicateKeyException("Application ID must be unique...");
-            }
-
+        try {
+            Map<String, Object> applicationUniqueIdAttributeId = applicationUniqueIdAttributeDao.insert(
+                    applicationId,
+                    application.getUniqueId(),
+                    Instant.now(),
+                    Attribute.METADATA_ACTIVE);
+            logger.info("Added application uniqueId attribute with ID: {}",
+                    applicationUniqueIdAttributeId.entrySet().stream().toList());
+        } catch (DuplicateKeyException duplicateKeyException) {
+            throw new io.github.thirumalx.exception.DuplicateKeyException("Application ID must be unique...");
         }
         // Add Status (Active)
         applicationStatusAttributeDao.insert(applicationId, Knot.ACTIVE, Instant.now(), Attribute.METADATA_ACTIVE);

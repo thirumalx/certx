@@ -1,11 +1,8 @@
 -- DDL 
 ----
--- Unique index/constraint for the application id
+-- Unique constraint for the application id
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_ap_uid_application_uniqueid
-ON certx.ap_uid_application_uniqueid (ap_uid_application_uniqueid);
-
-CREATE OR REPLACE FUNCTION certx.enforce_uid_uniqueness()
+CREATE OR REPLACE FUNCTION certx.enforce_ap_uid_application_uniqueness()
 RETURNS trigger AS $$
 BEGIN
   IF EXISTS (
@@ -15,19 +12,21 @@ BEGIN
       AND ap_uid_ap_id <> NEW.ap_uid_ap_id
   ) THEN
     RAISE EXCEPTION
-      'Application Unique ID % already in use',
-      NEW.ap_uid_application_uniqueid;
+      'Application Unique ID % already exists',
+      NEW.ap_uid_application_uniqueid
+      USING ERRCODE = 'unique_violation';
   END IF;
 
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+
 ---
-CREATE TRIGGER trg_uid_unique
+CREATE TRIGGER trg_ap_uid_application_unique
 BEFORE INSERT ON certx.ap_uid_application_uniqueid
 FOR EACH ROW
-EXECUTE FUNCTION certx.enforce_uid_uniqueness();
+EXECUTE FUNCTION certx.enforce_ap_uid_application_uniqueness();
 
 ---
 
