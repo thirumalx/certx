@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Application } from '../services/applicationService';
+import { type Application } from '../services/applicationService';
 import '../styles/ApplicationForm.css';
 
 interface ApplicationFormProps {
@@ -22,12 +22,6 @@ export function ApplicationForm({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (application) {
-      setFormData(application);
-    }
-  }, [application]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

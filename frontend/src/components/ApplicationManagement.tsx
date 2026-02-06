@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
-  Application,
+  type Application,
   applicationService,
-  PageResponse,
+  type PageResponse,
 } from '../services/applicationService';
 import { ApplicationForm } from './ApplicationForm';
 import '../styles/ApplicationManagement.css';
@@ -38,8 +38,14 @@ export function ApplicationManagement() {
       setTotalElements(response.totalElements);
       setCurrentPage(response.currentPage);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load applications';
+      let errorMessage = 'Failed to load applications';
+      if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
+        errorMessage = 'Cannot connect to backend API. Make sure the server is running on http://localhost:8080';
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
       setError(errorMessage);
+      console.error('Error loading applications:', err);
     } finally {
       setLoading(false);
     }
@@ -47,7 +53,7 @@ export function ApplicationManagement() {
 
   useEffect(() => {
     loadApplications(0);
-  }, []);
+  }, [pageSize]);
 
   // Handle create/update
   const handleFormSubmit = async (formData: Application) => {

@@ -1,23 +1,16 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-
-function Home() {
-  return <h1>Home Page</h1>
-}
-
-function Apps() {
-  return <h1>Applications Page</h1>
-}
+import './App.css'
+import { Navigation } from './components/Navigation'
+import { Home } from './pages/Home'
+import { ApplicationManagement } from './components/ApplicationManagement'
 
 function App() {
   return (
     <Router>
-      <nav style={{ padding: '20px', backgroundColor: '#333', color: 'white' }}>
-        <a href="/" style={{ marginRight: '20px', color: 'white' }}>Home</a>
-        <a href="/applications" style={{ color: 'white' }}>Applications</a>
-      </nav>
+      <Navigation />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/applications" element={<Apps />} />
+        <Route path="/applications" element={<ApplicationManagement />} />
       </Routes>
     </Router>
   )
