@@ -22,7 +22,10 @@ export interface PageResponse<T> {
   currentPage: number;
 }
 
-const API_BASE_URL = '/application';
+
+import { API_BASE } from '../config';
+
+const API_BASE_URL = `${API_BASE}/application`;
 
 export const applicationService = {
   /**
