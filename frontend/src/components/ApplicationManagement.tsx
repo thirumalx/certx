@@ -36,7 +36,7 @@ export function ApplicationManagement() {
       setApplications(response.content);
       setTotalPages(response.totalPages);
       setTotalElements(response.totalElements);
-      setCurrentPage(response.currentPage);
+      setCurrentPage(response.page); 
     } catch (err) {
       let errorMessage = 'Failed to load applications';
       if (err instanceof TypeError && err.message.includes('Failed to fetch')) {

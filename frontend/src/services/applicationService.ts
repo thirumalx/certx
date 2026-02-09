@@ -20,6 +20,7 @@ export interface PageResponse<T> {
   totalElements: number;
   totalPages: number;
   currentPage: number;
+  page: number; // API returns 'page' as current page index
 }
 
 
