@@ -66,8 +66,8 @@ export const applicationService = {
    */
   listApplications: async (pageNo: number = 0, pageSize: number = 10): Promise<PageResponse<Application>> => {
     const params = new URLSearchParams({
-      pageNo: pageNo.toString(),
-      pageSize: pageSize.toString(),
+      page: pageNo.toString(),
+      size: pageSize.toString(),
     });
 
     const response = await fetch(`${API_BASE_URL}?${params}`);
