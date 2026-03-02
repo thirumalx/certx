@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   type Application,
   applicationService,
@@ -10,6 +11,7 @@ import '../styles/ApplicationManagement.css';
 type FilterStatus = 'All' | 'Active' | 'Deleted';
 
 export function ApplicationManagement() {
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -216,7 +218,12 @@ export function ApplicationManagement() {
                   <tbody>
                     {filteredApplications.length > 0 ? (
                       filteredApplications.map((app) => (
-                        <tr key={app.id} className={`status-${app.status.toLowerCase()}`}>
+                        <tr
+                          key={app.id}
+                          className={`status-${app.status.toLowerCase()}`}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => navigate(`/applications/${app.id}/clients`)}
+                        >
                           <td>{app.id}</td>
                           <td>{app.applicationName}</td>
                           <td>{app.uniqueId}</td>
@@ -225,7 +232,16 @@ export function ApplicationManagement() {
                               {app.status}
                             </span>
                           </td>
-                          <td className="actions-cell">
+                          <td
+                            className="actions-cell"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => navigate(`/applications/${app.id}/clients`)}
+                            >
+                              Clients →
+                            </button>
                             <button
                               className="btn btn-sm btn-info"
                               onClick={() => handleEdit(app)}

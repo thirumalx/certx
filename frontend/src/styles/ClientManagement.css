@@ -1,4 +1,4 @@
-.application-management {
+.client-management {
   padding: 20px 20px 10px 20px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   min-height: 100vh;
@@ -16,17 +16,44 @@
   padding-bottom: 12px;
 }
 
-.management-header h1 {
-  margin: 0;
-  color: #333;
-  font-size: 24px;
-  font-weight: 600;
-}
-
 .header-left {
   display: flex;
-  align-items: right;
-  gap: 20px;
+  align-items: center;
+  gap: 16px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #f0f4ff;
+  border: 1px solid #c0d0f0;
+  border-radius: 6px;
+  color: #3a6bc8;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.back-btn:hover {
+  background: #dce8ff;
+  border-color: #4a90e2;
+}
+
+.page-title-group h2 {
+  margin: 0 0 2px 0;
+  color: #222;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: #888;
+  margin: 0;
 }
 
 /* Management Container */
@@ -146,23 +173,22 @@
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
-  /* limit visible rows to approx 4; content scrolls when larger */
   --row-height: 56px;
   max-height: calc(var(--row-height) * 5 + 83px);
 }
 
-.applications-table {
+.clients-table {
   width: 100%;
   border-collapse: collapse;
   background-color: white;
 }
 
-.applications-table thead {
+.clients-table thead {
   background-color: #f8f9fa;
   border-bottom: 2px solid #dee2e6;
 }
 
-.applications-table th {
+.clients-table th {
   padding: 15px;
   text-align: left;
   font-weight: 600;
@@ -172,35 +198,35 @@
   letter-spacing: 0.5px;
 }
 
-.applications-table td {
+.clients-table td {
   padding: 15px;
   border-bottom: 1px solid #dee2e6;
   color: #555;
   font-size: 14px;
 }
 
-.applications-table tbody tr {
+.clients-table tbody tr {
   transition: background-color 0.2s ease;
 }
 
-.applications-table tbody tr:hover {
-  background-color: #f8f9fa;
+.clients-table tbody tr:hover {
+  background-color: #f0f6ff;
 }
 
-.applications-table tbody tr.status-active {
+.clients-table tbody tr.status-active {
   border-left: 3px solid #28a745;
 }
 
-.applications-table tbody tr.status-inactive {
+.clients-table tbody tr.status-inactive {
   border-left: 3px solid #6c757d;
 }
 
-.applications-table tbody tr.status-suspended {
+.clients-table tbody tr.status-suspended {
   border-left: 3px solid #ffc107;
 }
 
-.applications-table tbody tr.status-archived {
-  border-left: 3px solid #17a2b8;
+.clients-table tbody tr.status-deleted {
+  border-left: 3px solid #dc3545;
 }
 
 /* Status Badge */
@@ -232,10 +258,10 @@
   border: 1px solid #ffeeba;
 }
 
-.status-badge.status-archived {
-  background-color: #d1ecf1;
-  color: #0c5460;
-  border: 1px solid #bee5eb;
+.status-badge.status-deleted {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
 }
 
 /* Actions Cell */
@@ -258,7 +284,7 @@
 .pagination {
   display: flex;
   justify-content: right;
-  align-items: right;
+  align-items: center;
   gap: 15px;
   padding: 20px;
   background-color: #f8f9fa;
@@ -296,13 +322,8 @@
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* Alerts */
@@ -319,13 +340,6 @@
   color: #721c24;
   border-left-color: #f5c6cb;
   border: 1px solid #f5c6cb;
-}
-
-.alert-success {
-  background-color: #d4edda;
-  color: #155724;
-  border-left-color: #c3e6cb;
-  border: 1px solid #c3e6cb;
 }
 
 /* Buttons */
@@ -389,23 +403,19 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .application-management {
+  .client-management {
     padding: 1px;
   }
 
   .management-header {
     flex-direction: column;
-    gap: 1px;
+    gap: 10px;
     align-items: flex-start;
-  }
-
-  .management-header h1 {
-    font-size: 22px;
   }
 
   .management-container {
     flex-direction: column;
-    gap: 1px;
+    gap: 10px;
     min-height: auto;
   }
 
@@ -419,7 +429,6 @@
     padding: 0;
     background-color: transparent;
     box-shadow: none;
-    position: static;
   }
 
   .filter-title {
@@ -440,35 +449,6 @@
 
   .filter-btn {
     padding: 10px 12px;
-    font-size: 12px;
-  }
-
-  .search-bar {
-    flex-direction: column;
-  }
-
-  .search-input {
-    width: 100%;
-  }
-
-  .applications-table th,
-  .applications-table td {
-    padding: 10px;
-    font-size: 12px;
-  }
-
-  .actions-cell {
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .pagination {
-    flex-wrap: wrap;
-    gap: 1px;
-  }
-
-  .btn {
-    padding: 6px 12px;
     font-size: 12px;
   }
 }
