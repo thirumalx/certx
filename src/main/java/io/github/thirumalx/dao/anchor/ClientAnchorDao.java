@@ -20,7 +20,8 @@ public class ClientAnchorDao extends AnchorDao<ClientAnchor> {
 
     @Override
     protected RowMapper<ClientAnchor> rowMapper() {
-        return (rs, rowNum) -> new ClientAnchor(rs.getLong(AnchorColumns.Client.ID), rs.getLong(AnchorColumns.Client.METADATA));
+        return (rs, rowNum) -> new ClientAnchor(rs.getLong(AnchorColumns.Client.ID),
+                rs.getLong(AnchorColumns.Client.METADATA));
     }
 
 }

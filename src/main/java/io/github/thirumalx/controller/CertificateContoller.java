@@ -3,6 +3,8 @@ package io.github.thirumalx.controller;
 import java.net.URI;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +18,7 @@ import io.github.thirumalx.service.CertificateService;
  * @author Thirumal
  */
 @RestController
-@RequestMapping("certificate")
+@RequestMapping("/application/{applicationId}/client/{clientId}/certificate")
 public class CertificateContoller {
     
     private final CertificateService certificateService;
@@ -32,9 +34,9 @@ public class CertificateContoller {
                 .body(certificate);
     }
 
-    @PostMapping(value = "/fetch-detail")
-    public ResponseEntity<Certificate> getCertificateDetail(@RequestBody Certificate  certificate) {
-        certificate = certificateService.getCertificateDeail(certificate);
+    @GetMapping
+    public ResponseEntity<Certificate> listCertificates(@PathVariable Long applicationId, @PathVariable Long clientId) {
+        Certificate certificate = certificateService.listCertificates(applicationId, clientId);
         return ResponseEntity.ok(certificate);
     }
 
