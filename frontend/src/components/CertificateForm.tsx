@@ -249,7 +249,7 @@ export function CertificateForm({
                     <div className="form-actions">
                         {!readOnly && (
                             <button type="submit" className="btn btn-primary" disabled={loading}>
-                                {loading ? 'Saving...' : certificate ? 'Update' : 'Issue Certificate'}
+                                {loading ? 'Saving...' : certificate ? 'Update' : 'Add Certificate'}
                             </button>
                         )}
                         <button

@@ -34,17 +34,17 @@ public class ClientService {
 
     Logger logger = LoggerFactory.getLogger(ClientService.class);
 
-    //Anchors
+    // Anchors
     private final ClientAnchorDao clientAnchorDao;
     private final ApplicationAnchorDao applicationAnchorDao;
-    //Attributes
+    // Attributes
     private final ClientNameAttributeDao clientNameAttributeDao;
     private final ClientEmailAttributeDao clientEmailAttributeDao;
     private final ClientMobileNumberAttributeDao clientMobileNumberAttributeDao;
     private final ClientStatusAttributeDao clientStatusAttributeDao;
-    //Views
+    // Views
     private final ClientViewDao clientViewDao;
-    //Ties
+    // Ties
     private final ApplicationClientTieDao applicationClientTieDao;
 
     public ClientService(ClientAnchorDao clientAnchorDao,
@@ -67,59 +67,61 @@ public class ClientService {
     @Transactional
     public Client save(Client client) {
         logger.info("Saving client: {} for the application {}", client, client.getApplicationId());
-        
+
         // Validate Application ID
         if (client.getApplicationId() == null) {
             logger.debug("Application ID is required to create a client");
             throw new IllegalArgumentException("Application ID is required to create a client");
         }
-        
+
         // Check if application exists
         if (!applicationAnchorDao.existsById(client.getApplicationId())) {
             logger.error("Application with ID: {} does not exist", client.getApplicationId());
-            throw new ResourceNotFoundException("Application with ID: " + client.getApplicationId() + " does not exist");
+            throw new ResourceNotFoundException(
+                    "Application with ID: " + client.getApplicationId() + " does not exist");
         }
         logger.debug("Application with ID: {} exists", client.getApplicationId());
-        
+
         // Check for client duplication (name/email within the same application)
-        List<Client> existingClients = clientViewDao.listNow(Knot.ACTIVE, 0, Integer.MAX_VALUE);
+        List<Client> existingClients = clientViewDao.listNow(client.getApplicationId(), Knot.ACTIVE, 0,
+                Integer.MAX_VALUE);
         boolean isDuplicate = existingClients.stream()
-            .filter(c -> c.getApplicationId().equals(client.getApplicationId()))
-            .anyMatch(c -> (client.getName() != null && client.getName().equals(c.getName())) ||
-                          (client.getEmail() != null && client.getEmail().equals(c.getEmail())));
-        
+                .anyMatch(c -> (client.getName() != null && client.getName().equals(c.getName())) ||
+                        (client.getEmail() != null && client.getEmail().equals(c.getEmail())));
+
         if (isDuplicate) {
-            logger.error("Client with name: {} or email: {} already exists for application: {}", 
-                client.getName(), client.getEmail(), client.getApplicationId());
+            logger.error("Client with name: {} or email: {} already exists for application: {}",
+                    client.getName(), client.getEmail(), client.getApplicationId());
             throw new IllegalArgumentException("Client with name or email already exists for this application");
         }
         logger.debug("No duplicate client found for application: {}", client.getApplicationId());
-        
+
         // Create Client Anchor
         Long clientId = clientAnchorDao.insert(Anchor.METADATA_ACTIVE);
         logger.info("Created client anchor with ID: {}", clientId);
         client.setId(clientId);
-        
+
         // Add Name
         clientNameAttributeDao.insert(clientId, client.getName(), Attribute.METADATA_ACTIVE);
-        
+
         // Add Email
         if (client.getEmail() != null) {
             clientEmailAttributeDao.insert(clientId, client.getEmail(), Instant.now(), Attribute.METADATA_ACTIVE);
         }
-        
+
         // Add Mobile Number
         if (client.getMobileNumber() != null) {
             clientMobileNumberAttributeDao.insert(clientId, client.getMobileNumber(), Instant.now(),
                     Attribute.METADATA_ACTIVE);
         }
-        
+
         // Add Status (Active)
         clientStatusAttributeDao.insert(clientId, Knot.ACTIVE, Instant.now(), Attribute.METADATA_ACTIVE);
         // Create Tie between Client and Application
-        applicationClientTieDao.insertHistorized(client.getApplicationId(), clientId, Attribute.METADATA_ACTIVE, Instant.now());
+        applicationClientTieDao.insertHistorized(client.getApplicationId(), clientId, Attribute.METADATA_ACTIVE,
+                Instant.now());
         logger.info("Client created successfully with ID: {} for application: {}", clientId, client.getApplicationId());
-        return client; 
+        return client;
     }
 
     @Transactional
@@ -163,10 +165,11 @@ public class ClientService {
     }
 
     public PageResponse<Client> listClient(Long applicationId, PageRequest pageRequest) {
-        logger.debug("Listing clients for the application {} from page {} with size {}", applicationId, pageRequest.page(), pageRequest.size());
-        List<Client> clients = clientViewDao.listNow(Knot.ACTIVE, pageRequest.page(),
+        logger.debug("Listing clients for the application {} from page {} with size {}", applicationId,
+                pageRequest.page(), pageRequest.size());
+        List<Client> clients = clientViewDao.listNow(applicationId, Knot.ACTIVE, pageRequest.page(),
                 pageRequest.size());
-        long totalElements = clientViewDao.countNow(Knot.ACTIVE);
+        long totalElements = clientViewDao.countNow(applicationId, Knot.ACTIVE);
         int totalPages = (int) Math.ceil((double) totalElements / pageRequest.size());
         return new PageResponse<>(pageRequest.page(), pageRequest.size(), clients, totalElements, totalPages);
     }
