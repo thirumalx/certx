@@ -35,8 +35,10 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.security.KeyStore;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 
 /**
  * @author Thirumal
@@ -148,16 +150,40 @@ public class CertificateService {
         .status("ACTIVE");
 
     try (InputStream is = new FileInputStream(file)) {
-      CertificateFactory cf = CertificateFactory.getInstance("X.509");
-      X509Certificate cert = (X509Certificate) cf.generateCertificate(is);
-      builder.serialNumber(cert.getSerialNumber().toString())
-          .issuedOn(LocalDateTime.ofInstant(cert.getNotBefore().toInstant(), ZoneId.systemDefault()))
-          .notAfter(LocalDateTime.ofInstant(cert.getNotAfter().toInstant(), ZoneId.systemDefault()));
-      logger.debug("Successfully parsed certificate: {}", path);
+      if (path.toLowerCase().endsWith(".pfx") || path.toLowerCase().endsWith(".p12")) {
+        logger.debug("Parsing PFX/P12 certificate: {}", path);
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        // Try with empty password as default for validation
+        keyStore.load(is, "".toCharArray());
+        Enumeration<String> aliases = keyStore.aliases();
+        while (aliases.hasMoreElements()) {
+          String alias = aliases.nextElement();
+          if (keyStore.isCertificateEntry(alias) || keyStore.isKeyEntry(alias)) {
+            java.security.cert.Certificate c = keyStore.getCertificate(alias);
+            if (c instanceof X509Certificate cert) {
+              builder.serialNumber(cert.getSerialNumber().toString())
+                  .issuedOn(LocalDateTime.ofInstant(cert.getNotBefore().toInstant(), ZoneId.systemDefault()))
+                  .notAfter(LocalDateTime.ofInstant(cert.getNotAfter().toInstant(), ZoneId.systemDefault()));
+              logger.debug("Successfully parsed PFX certificate: {}", path);
+              break;
+            }
+          }
+        }
+      } else {
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        X509Certificate cert = (X509Certificate) cf.generateCertificate(is);
+        builder.serialNumber(cert.getSerialNumber().toString())
+            .issuedOn(LocalDateTime.ofInstant(cert.getNotBefore().toInstant(), ZoneId.systemDefault()))
+            .notAfter(LocalDateTime.ofInstant(cert.getNotAfter().toInstant(), ZoneId.systemDefault()));
+        logger.debug("Successfully parsed X.509 certificate: {}", path);
+      }
     } catch (Exception e) {
       logger.error("Error parsing certificate: {}. Error: {}", path, e.getMessage());
       // We still return basic info if parsing fails (e.g. for PFX files which need
       // password)
+      if (path.toLowerCase().endsWith(".pfx") || path.toLowerCase().endsWith(".p12")) {
+        return builder.serialNumber("PASSWORD_PROTECTED_PFX").build();
+      }
       throw new RuntimeException("Error parsing certificate: " + e.getMessage());
     }
     return builder.build();

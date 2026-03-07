@@ -322,8 +322,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Alerts */
@@ -399,6 +404,18 @@
 .btn-sm {
   padding: 6px 12px;
   font-size: 12px;
+}
+
+.clickable-name {
+  color: #4a90e2;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.clickable-name:hover {
+  color: #357abd;
+  text-decoration: underline;
 }
 
 /* Responsive Design */

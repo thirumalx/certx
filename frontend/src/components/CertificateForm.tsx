@@ -10,6 +10,7 @@ interface CertificateFormProps {
     onSubmit: (cert: Certificate) => void;
     onCancel: () => void;
     loading?: boolean;
+    readOnly?: boolean;
 }
 
 export function CertificateForm({
@@ -20,6 +21,7 @@ export function CertificateForm({
     onSubmit,
     onCancel,
     loading = false,
+    readOnly = false,
 }: CertificateFormProps) {
     const [formData, setFormData] = useState<Certificate>(
         certificate || {
@@ -122,16 +124,18 @@ export function CertificateForm({
                                     value={formData.path}
                                     onChange={handleChange}
                                     placeholder="e.g. C:\Certs\client.pem"
-                                    disabled={loading}
+                                    disabled={loading || readOnly}
                                 />
-                                <button
-                                    type="button"
-                                    className={`btn-action btn-large ${validationStatus}`}
-                                    onClick={handleValidate}
-                                    disabled={isValidating || loading}
-                                >
-                                    {isValidating ? '...' : 'Fetch Certificate Details'}
-                                </button>
+                                {!readOnly && (
+                                    <button
+                                        type="button"
+                                        className={`btn-action btn-large ${validationStatus}`}
+                                        onClick={handleValidate}
+                                        disabled={isValidating || loading}
+                                    >
+                                        {isValidating ? '...' : 'Fetch Certificate Details'}
+                                    </button>
+                                )}
                             </div>
                             {validationStatus === 'success' && (
                                 <span className="success-message">File found in directory!</span>
@@ -204,16 +208,18 @@ export function CertificateForm({
                     </div>
 
                     <div className="form-actions">
-                        <button type="submit" className="btn btn-primary" disabled={loading}>
-                            {loading ? 'Saving...' : certificate ? 'Update' : 'Issue Certificate'}
-                        </button>
+                        {!readOnly && (
+                            <button type="submit" className="btn btn-primary" disabled={loading}>
+                                {loading ? 'Saving...' : certificate ? 'Update' : 'Issue Certificate'}
+                            </button>
+                        )}
                         <button
                             type="button"
                             className="btn btn-secondary"
                             onClick={onCancel}
                             disabled={loading}
                         >
-                            Cancel
+                            {readOnly ? 'Close' : 'Cancel'}
                         </button>
                     </div>
                 </form>

@@ -4,7 +4,7 @@ import {
     type Certificate,
     certificateService,
 } from '../services/certificateService';
-import { clientService } from '../services/clientService';
+import { clientService, type Client } from '../services/clientService';
 import { CertificateForm } from './CertificateForm';
 import '../styles/CertificateManagement.css';
 
@@ -27,6 +27,7 @@ export function CertificateManagement() {
     const [searchTerm, setSearchTerm] = useState('');
     const [paging, setPaging] = useState({ page: 0, size: 10, total: 0 });
     const [activeFilter, setActiveFilter] = useState('ALL');
+    const [clients, setClients] = useState<Client[]>([]);
 
     // Load client info for the heading
     useEffect(() => {
@@ -34,6 +35,13 @@ export function CertificateManagement() {
             setClientName(c?.name ?? `Client #${cId}`);
         }).catch(() => {
             setClientName(`Client #${cId}`);
+        });
+
+        // Load all clients for the sidebar
+        clientService.listClients(appId, 0, 100).then((data) => {
+            setClients(data.content);
+        }).catch(() => {
+            setClients([]);
         });
     }, [appId, cId]);
 
@@ -105,31 +113,68 @@ export function CertificateManagement() {
         );
     });
 
+    const formatPath = (path: string) => {
+        if (!path) return '—';
+        const parts = path.split(/[\\/]/);
+        if (parts.length <= 2) return path;
+        const root = parts[0] || (path.startsWith('/') ? '/' : '');
+        const fileName = parts[parts.length - 1];
+        return `${root}${root.endsWith('\\') || root.endsWith('/') ? '' : (path.includes('\\') ? '\\' : '/')}...${path.includes('\\') ? '\\' : '/'}${fileName}`;
+    };
+
     return (
         <div className="certificate-management">
             <div className="management-container">
-                <aside className="management-sidebar">
-                    <nav className="sidebar-nav">
-                        <h3>Filters</h3>
-                        <ul>
-                            <li
-                                className={activeFilter === 'ALL' ? 'active' : ''}
-                                onClick={() => setActiveFilter('ALL')}
-                            >
-                                All Certificates
+                <aside className="left-nav">
+                    <nav className="filter-nav">
+                        <h3 className="filter-title">Filters</h3>
+                        <ul className="filter-list">
+                            <li key="ALL">
+                                <button
+                                    className={`filter-btn ${activeFilter === 'ALL' ? 'active' : ''}`}
+                                    onClick={() => setActiveFilter('ALL')}
+                                >
+                                    All Certificates
+                                </button>
                             </li>
-                            <li
-                                className={activeFilter === 'ACTIVE' ? 'active' : ''}
-                                onClick={() => setActiveFilter('ACTIVE')}
-                            >
-                                Active
+                            <li key="ACTIVE">
+                                <button
+                                    className={`filter-btn ${activeFilter === 'ACTIVE' ? 'active' : ''}`}
+                                    onClick={() => setActiveFilter('ACTIVE')}
+                                >
+                                    Active
+                                </button>
                             </li>
-                            <li
-                                className={activeFilter === 'EXPIRED' ? 'active' : ''}
-                                onClick={() => setActiveFilter('EXPIRED')}
-                            >
-                                Expired
+                            <li key="EXPIRED">
+                                <button
+                                    className={`filter-btn ${activeFilter === 'EXPIRED' ? 'active' : ''}`}
+                                    onClick={() => setActiveFilter('EXPIRED')}
+                                >
+                                    Expired
+                                </button>
                             </li>
+                            <li key="DELETED">
+                                <button
+                                    className={`filter-btn ${activeFilter === 'DELETED' ? 'active' : ''}`}
+                                    onClick={() => setActiveFilter('DELETED')}
+                                >
+                                    Deleted
+                                </button>
+                            </li>
+                        </ul>
+
+                        <h3 className="filter-title" style={{ marginTop: '30px' }}>Clients</h3>
+                        <ul className="filter-list">
+                            {clients.map((client) => (
+                                <li key={client.id}>
+                                    <button
+                                        className={`filter-btn ${cId === client.id ? 'active' : ''}`}
+                                        onClick={() => navigate(`/applications/${appId}/clients/${client.id}/certificates`)}
+                                    >
+                                        {client.name}
+                                    </button>
+                                </li>
+                            ))}
                         </ul>
                     </nav>
                 </aside>
@@ -189,9 +234,9 @@ export function CertificateManagement() {
                                 <tbody>
                                     {filtered.length > 0 ? (
                                         filtered.map((cert) => {
-                                            const isRevoked = !!cert.revokedOn;
+                                            const isRevoked = !!cert.revokedOn || cert.status === '0';
                                             const isExpired = cert.notAfter ? new Date(cert.notAfter) < new Date() : false;
-                                            const statusClass = isRevoked ? 'cert-revoked' : (isExpired ? 'cert-expired' : 'cert-active');
+                                            const statusClass = isRevoked ? 'cert-deleted' : (isExpired ? 'cert-expired' : 'cert-active');
 
                                             return (
                                                 <tr
@@ -199,7 +244,9 @@ export function CertificateManagement() {
                                                     className={statusClass}
                                                 >
                                                     <td>{cert.serialNumber ?? '—'}</td>
-                                                    <td className="mono-text">{cert.path}</td>
+                                                    <td className="mono-text" title={cert.path}>
+                                                        {formatPath(cert.path)}
+                                                    </td>
                                                     <td>
                                                         {cert.issuedOn
                                                             ? new Date(cert.issuedOn).toLocaleDateString()
@@ -214,11 +261,17 @@ export function CertificateManagement() {
                                                         <span
                                                             className={`cert-badge ${statusClass}`}
                                                         >
-                                                            {isRevoked ? 'Revoked' : (isExpired ? 'Expired' : 'Active')}
+                                                            {isRevoked ? 'Deleted' : (isExpired ? 'Expired' : 'Active')}
                                                         </span>
                                                     </td>
                                                     <td className="actions-cell">
-
+                                                        <button
+                                                            className="btn btn-sm btn-outline"
+                                                            onClick={() => handleEdit(cert)}
+                                                            disabled={loading}
+                                                        >
+                                                            View
+                                                        </button>
                                                         {!isRevoked && (
                                                             <button
                                                                 className="btn btn-sm btn-danger"
@@ -259,6 +312,7 @@ export function CertificateManagement() {
                                 setError(null);
                             }}
                             loading={formLoading}
+                            readOnly={!!editingCert && (!!editingCert.revokedOn || editingCert.status === '0')}
                         />
                     )}
                 </main>

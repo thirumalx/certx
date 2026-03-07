@@ -219,7 +219,14 @@ export function ClientManagement() {
                                                     className={`status-${client.status.toLowerCase()}`}
                                                 >
                                                     <td>{client.id}</td>
-                                                    <td>{client.name}</td>
+                                                    <td>
+                                                        <span
+                                                            className="clickable-name"
+                                                            onClick={() => navigate(`/applications/${appId}/clients/${client.id}/certificates`)}
+                                                        >
+                                                            {client.name}
+                                                        </span>
+                                                    </td>
                                                     <td>{client.email ?? '—'}</td>
                                                     <td>{client.mobileNumber ?? '—'}</td>
                                                     <td>

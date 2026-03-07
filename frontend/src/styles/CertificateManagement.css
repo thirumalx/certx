@@ -63,6 +63,8 @@
     gap: 30px;
     flex: 1;
     min-height: 0;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 /* Management Content */
@@ -136,10 +138,11 @@
 }
 
 .certificates-table td {
-    padding: 15px;
+    padding: 12px 15px;
     border-bottom: 1px solid #dee2e6;
     color: #555;
     font-size: 14px;
+    white-space: nowrap;
 }
 
 .certificates-table tbody tr {
@@ -150,12 +153,98 @@
     background-color: #f0f6ff;
 }
 
-.certificates-table tbody tr.cert-active {
-    border-left: 3px solid #28a745;
+/* Left Navigation */
+.left-nav {
+    width: 220px;
+    flex-shrink: 0;
+    height: 100%;
 }
 
-.certificates-table tbody tr.cert-revoked {
-    border-left: 3px solid #dc3545;
+.filter-nav {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-title {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.filter-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.filter-btn {
+    width: 100%;
+    padding: 10px 15px;
+    border: none;
+    background-color: transparent;
+    color: #495057;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-align: left;
+    text-decoration: none !important;
+}
+
+.filter-btn:hover {
+    background-color: #e9ecef;
+    color: #007bff;
+}
+
+.filter-btn.active {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Expired Certificate Styles */
+.certificates-table tbody tr.cert-expired {
+    border-left: 3px solid #ffc107;
+    background-color: #fffaf0;
+}
+
+.certificates-table tbody tr.cert-expired:hover {
+    background-color: #fff4e0;
+}
+
+.cert-badge.cert-expired {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.expired-text {
+    color: #d9534f;
+    font-weight: 600;
+}
+
+/* Deleted Certificate Styles */
+.certificates-table tbody tr.cert-deleted {
+    border-left: 3px solid #6c757d;
+    background-color: #f8f9fa;
+    opacity: 0.8;
+}
+
+.cert-badge.cert-deleted {
+    background-color: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #d6d8db;
 }
 
 /* Status Badge */
@@ -175,10 +264,16 @@
     border: 1px solid #c3e6cb;
 }
 
-.cert-badge.cert-revoked {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+.cert-badge.cert-expired {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.cert-badge.cert-deleted {
+    background-color: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #d6d8db;
 }
 
 /* No Data */
@@ -247,6 +342,10 @@
     cursor: pointer;
     transition: all 0.3s ease;
     white-space: nowrap;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn:disabled {
@@ -264,165 +363,28 @@
     box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
 }
 
-.btn-info {
-    background-color: #17a2b8;
-    color: white;
-}
-
-.btn-info:hover:not(:disabled) {
-    background-color: #138496;
-}
-
 .btn-sm {
     padding: 6px 12px;
     font-size: 12px;
 }
 
-/* Sidebar Styles */
-.management-sidebar {
-    width: 240px;
-    background-color: #f8f9fa;
-    border-right: 1px solid #dee2e6;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
+.btn-outline {
+    background-color: transparent;
+    color: #4a90e2;
+    border: 1px solid #4a90e2;
 }
 
-.sidebar-nav h3 {
-    font-size: 14px;
-    color: #6c757d;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 15px;
+.btn-outline:hover:not(:disabled) {
+    background-color: #f0f6ff;
+    box-shadow: 0 2px 4px rgba(74, 144, 226, 0.2);
 }
 
-.sidebar-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.sidebar-nav li {
-    padding: 12px 15px;
-    margin-bottom: 5px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: #495057;
-    transition: all 0.2s ease;
-}
-
-.sidebar-nav li:hover {
-    background-color: #e9ecef;
-    color: #007bff;
-}
-
-.sidebar-nav li.active {
-    background-color: #007bff;
+.btn-danger {
+    background-color: #dc3545;
     color: white;
 }
 
-/* Expired Certificate Styles */
-.certificates-table tbody tr.cert-expired {
-    border-left: 3px solid #ffc107;
-    background-color: #fffaf0;
-}
-
-.certificates-table tbody tr.cert-expired:hover {
-    background-color: #fff4e0;
-}
-
-.cert-badge.cert-expired {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
-}
-
-.expired-text {
-    color: #d9534f;
-    font-weight: 600;
-}
-
-/* Deleted Certificate Styles */
-.certificates-table tbody tr.cert-deleted {
-    border-left: 3px solid #6c757d;
-    background-color: #f8f9fa;
-    opacity: 0.8;
-}
-
-.cert-badge.cert-deleted {
-    background-color: #e2e3e5;
-    color: #383d41;
-    border: 1px solid #d6d8db;
-}
-
-.delete-btn:hover {
-    color: #c82333 !important;
-}
-
-/* Sidebar Styles */
-.management-sidebar {
-    width: 240px;
-    background-color: #f8f9fa;
-    border-right: 1px solid #dee2e6;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-.sidebar-nav h3 {
-    font-size: 14px;
-    color: #6c757d;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 15px;
-}
-
-.sidebar-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.sidebar-nav li {
-    padding: 12px 15px;
-    margin-bottom: 5px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: #495057;
-    transition: all 0.2s ease;
-}
-
-.sidebar-nav li:hover {
-    background-color: #e9ecef;
-    color: #007bff;
-}
-
-.sidebar-nav li.active {
-    background-color: #007bff;
-    color: white;
-}
-
-/* Expired Certificate Styles */
-.certificates-table tbody tr.cert-expired {
-    border-left: 3px solid #ffc107;
-    background-color: #fffaf0;
-}
-
-.certificates-table tbody tr.cert-expired:hover {
-    background-color: #fff4e0;
-}
-
-.cert-badge.cert-expired {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
-}
-
-.expired-text {
-    color: #d9534f;
-    font-weight: 600;
+.btn-danger:hover:not(:disabled) {
+    background-color: #c82333;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
