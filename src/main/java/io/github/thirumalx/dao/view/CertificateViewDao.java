@@ -1,6 +1,5 @@
 package io.github.thirumalx.dao.view;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -42,14 +41,18 @@ public class CertificateViewDao extends ViewDao<Certificate> {
      * List certificates for a given client (by status) from the now view, with
      * pagination.
      */
-    public List<Certificate> listNowByClient(Long clientId, int page, int size) {
-        return jdbc.sql(
+    public List<Certificate> listNowByClient(Long clientId, String filter, int page, int size) {
+        StringBuilder sql = new StringBuilder(
                 "SELECT nce.* FROM " + ViewColumns.CertificateNow.TABLE + " nce"
                         + " JOIN certx.ce_belongsto_cl_owns tie"
                         + " ON tie.ce_id_belongsto = nce." + ViewColumns.CertificateNow.ID
-                        + " WHERE tie.cl_id_owns = :clientId"
-                        + " ORDER BY nce." + ViewColumns.CertificateNow.ID
-                        + " LIMIT :limit OFFSET :offset")
+                        + " WHERE tie.cl_id_owns = :clientId");
+
+        applyFilter(sql, filter);
+
+        sql.append(" ORDER BY nce.").append(ViewColumns.CertificateNow.ID).append(" LIMIT :limit OFFSET :offset");
+
+        return jdbc.sql(sql.toString())
                 .param("clientId", clientId)
                 .param("limit", size)
                 .param("offset", page * size)
@@ -60,15 +63,40 @@ public class CertificateViewDao extends ViewDao<Certificate> {
     /**
      * Count certificates belonging to a given client from the now view.
      */
-    public long countNowByClient(Long clientId) {
-        return jdbc.sql(
+    public long countNowByClient(Long clientId, String filter) {
+        StringBuilder sql = new StringBuilder(
                 "SELECT count(*) FROM " + ViewColumns.CertificateNow.TABLE + " nce"
                         + " JOIN certx.ce_belongsto_cl_owns tie"
                         + " ON tie.ce_id_belongsto = nce." + ViewColumns.CertificateNow.ID
-                        + " WHERE tie.cl_id_owns = :clientId")
+                        + " WHERE tie.cl_id_owns = :clientId");
+
+        applyFilter(sql, filter);
+
+        return jdbc.sql(sql.toString())
                 .param("clientId", clientId)
                 .query(Long.class)
                 .single();
+    }
+
+    private void applyFilter(StringBuilder sql, String filter) {
+        if (filter == null || filter.isEmpty() || "ALL".equalsIgnoreCase(filter)) {
+            return;
+        }
+        switch (filter.toUpperCase()) {
+            case "ACTIVE":
+                sql.append(
+                        " AND nce.ce_ron_certificate_revokedon IS NULL AND (nce.ce_naf_certificate_notafter IS NULL OR nce.ce_naf_certificate_notafter > NOW())");
+                break;
+            case "EXPIRED":
+                sql.append(" AND nce.ce_ron_certificate_revokedon IS NULL AND nce.ce_naf_certificate_notafter < NOW()");
+                break;
+            case "REVOKED":
+                sql.append(" AND nce.ce_ron_certificate_revokedon IS NOT NULL");
+                break;
+            case "DELETED":
+                sql.append(" AND nce.ce_sta_sta_status = 'DELETED'");
+                break;
+        }
     }
 
     /**

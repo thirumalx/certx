@@ -108,39 +108,9 @@ export function CertificateForm({
     return (
         <div className="form-overlay">
             <div className="form-container wide-form">
-                <h2>{certificate ? 'Edit Certificate' : 'Issue New Certificate'}</h2>
+                <h2>{certificate ? 'Edit Certificate' : 'Add New Certificate'}</h2>
 
                 <form onSubmit={handleSubmit} className="two-column-form">
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label htmlFor="cert-serialNumber">Serial Number *</label>
-                            <input
-                                type="text"
-                                id="cert-serialNumber"
-                                name="serialNumber"
-                                value={formData.serialNumber}
-                                onChange={handleChange}
-                                placeholder="e.g. SN-12345"
-                                disabled={loading}
-                            />
-                            {errors.serialNumber && <span className="error-message">{errors.serialNumber}</span>}
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="cert-ownerName">Owner Name (Client)</label>
-                            <input
-                                type="text"
-                                id="cert-ownerName"
-                                name="ownerName"
-                                value={formData.ownerName}
-                                onChange={handleChange}
-                                placeholder="Enter owner name"
-                                disabled={true}
-                                className="readonly-input"
-                            />
-                        </div>
-                    </div>
-
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="cert-path">Certificate Path *</label>
@@ -151,16 +121,16 @@ export function CertificateForm({
                                     name="path"
                                     value={formData.path}
                                     onChange={handleChange}
-                                    placeholder="e.g. client.pem"
+                                    placeholder="e.g. C:\Certs\client.pem"
                                     disabled={loading}
                                 />
                                 <button
                                     type="button"
-                                    className={`btn-action ${validationStatus}`}
+                                    className={`btn-action btn-large ${validationStatus}`}
                                     onClick={handleValidate}
                                     disabled={isValidating || loading}
                                 >
-                                    {isValidating ? '...' : 'Validate'}
+                                    {isValidating ? '...' : 'Fetch Certificate Details'}
                                 </button>
                             </div>
                             {validationStatus === 'success' && (
@@ -173,18 +143,18 @@ export function CertificateForm({
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="cert-status">Status *</label>
-                            <select
-                                id="cert-status"
-                                name="status"
-                                value={formData.status}
+                            <label htmlFor="cert-serialNumber">Serial Number *</label>
+                            <input
+                                type="text"
+                                id="cert-serialNumber"
+                                name="serialNumber"
+                                value={formData.serialNumber}
                                 onChange={handleChange}
-                                disabled={loading}
-                            >
-                                <option value="ACTIVE">ACTIVE</option>
-                                <option value="INACTIVE">INACTIVE</option>
-                                <option value="REVOKED">REVOKED</option>
-                            </select>
+                                placeholder="Auto-populated"
+                                disabled={true}
+                                className="readonly-input"
+                            />
+                            {errors.serialNumber && <span className="error-message">{errors.serialNumber}</span>}
                         </div>
                     </div>
 
@@ -197,7 +167,8 @@ export function CertificateForm({
                                 name="issuedOn"
                                 value={formData.issuedOn?.split('T')[0] || ''}
                                 onChange={handleChange}
-                                disabled={loading}
+                                disabled={true}
+                                className="readonly-input"
                             />
                         </div>
 
@@ -209,7 +180,8 @@ export function CertificateForm({
                                 name="notAfter"
                                 value={formData.notAfter?.split('T')[0] || ''}
                                 onChange={handleChange}
-                                disabled={loading}
+                                disabled={true}
+                                className="readonly-input"
                             />
                             {errors.notAfter && <span className="error-message">{errors.notAfter}</span>}
                         </div>
@@ -224,7 +196,8 @@ export function CertificateForm({
                                 name="lastTimeVerifiedOn"
                                 value={formData.lastTimeVerifiedOn?.split('T')[0] || ''}
                                 onChange={handleChange}
-                                disabled={loading}
+                                disabled={true}
+                                className="readonly-input"
                             />
                         </div>
                         <div className="form-group placeholder-group"></div>

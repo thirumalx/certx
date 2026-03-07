@@ -79,8 +79,12 @@ export const certificateService = {
     /**
      * List certificates for a client
      */
-    listCertificates: async (appId: number, clientId: number, pageNum = 0, size = 10): Promise<{ content: Certificate[], totalElements: number, totalPages: number }> => {
-        const response = await fetch(`${API_BASE}/application/${appId}/client/${clientId}/certificate?page=${pageNum}&size=${size}`);
+    listCertificates: async (appId: number, clientId: number, pageNum = 0, size = 10, status?: string): Promise<{ content: Certificate[], totalElements: number, totalPages: number }> => {
+        let url = `${API_BASE}/application/${appId}/client/${clientId}/certificate?page=${pageNum}&size=${size}`;
+        if (status && status !== 'ALL') {
+            url += `&status=${status}`;
+        }
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error('Failed to list certificates');
         }

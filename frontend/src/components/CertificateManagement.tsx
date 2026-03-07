@@ -26,6 +26,7 @@ export function CertificateManagement() {
     const [formLoading, setFormLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [paging, setPaging] = useState({ page: 0, size: 10, total: 0 });
+    const [activeFilter, setActiveFilter] = useState('ALL');
 
     // Load client info for the heading
     useEffect(() => {
@@ -37,11 +38,11 @@ export function CertificateManagement() {
     }, [appId, cId]);
 
     // Fetch certificate detail for this client using ownerName lookup
-    const loadCertificates = async (page = 0) => {
+    const loadCertificates = async (page = 0, status = activeFilter) => {
         try {
             setLoading(true);
             setError(null);
-            const data = await certificateService.listCertificates(appId, cId, page, paging.size);
+            const data = await certificateService.listCertificates(appId, cId, page, paging.size, status);
             setCertificates(data.content);
             setPaging((prev) => ({ ...prev, page, total: data.totalElements }));
         } catch (err) {
@@ -53,8 +54,8 @@ export function CertificateManagement() {
     };
 
     useEffect(() => {
-        loadCertificates();
-    }, [appId, cId]);
+        loadCertificates(0, activeFilter);
+    }, [appId, cId, activeFilter]);
 
     const handleFormSubmit = async (certData: Certificate) => {
         try {
@@ -70,7 +71,7 @@ export function CertificateManagement() {
             }
             setShowForm(false);
             setEditingCert(null);
-            loadCertificates(paging.page);
+            loadCertificates(paging.page, activeFilter);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to save certificate');
         } finally {
@@ -78,14 +79,14 @@ export function CertificateManagement() {
         }
     };
 
-    const handleRevoke = async (id: number) => {
-        if (!window.confirm('Are you sure you want to revoke this certificate?')) return;
+    const handleDelete = async (id: number) => {
+        if (!window.confirm('Are you sure you want to delete this certificate?')) return;
         try {
             setLoading(true);
             await certificateService.deleteCertificate(appId, cId, id);
-            loadCertificates(paging.page);
+            loadCertificates(paging.page, activeFilter);
         } catch (err) {
-            setError('Failed to revoke certificate');
+            setError('Failed to delete certificate');
         } finally {
             setLoading(false);
         }
@@ -100,7 +101,6 @@ export function CertificateManagement() {
         const q = searchTerm.toLowerCase();
         return (
             (c.serialNumber ?? '').toLowerCase().includes(q) ||
-            (c.ownerName ?? '').toLowerCase().includes(q) ||
             (c.path ?? '').toLowerCase().includes(q)
         );
     });
@@ -108,6 +108,32 @@ export function CertificateManagement() {
     return (
         <div className="certificate-management">
             <div className="management-container">
+                <aside className="management-sidebar">
+                    <nav className="sidebar-nav">
+                        <h3>Filters</h3>
+                        <ul>
+                            <li
+                                className={activeFilter === 'ALL' ? 'active' : ''}
+                                onClick={() => setActiveFilter('ALL')}
+                            >
+                                All Certificates
+                            </li>
+                            <li
+                                className={activeFilter === 'ACTIVE' ? 'active' : ''}
+                                onClick={() => setActiveFilter('ACTIVE')}
+                            >
+                                Active
+                            </li>
+                            <li
+                                className={activeFilter === 'EXPIRED' ? 'active' : ''}
+                                onClick={() => setActiveFilter('EXPIRED')}
+                            >
+                                Expired
+                            </li>
+                        </ul>
+                    </nav>
+                </aside>
+
                 <main className="management-content">
                     <div className="management-header">
                         <div className="header-left">
@@ -126,7 +152,7 @@ export function CertificateManagement() {
                         <div className="search-bar">
                             <input
                                 type="text"
-                                placeholder="Search by serial, owner, path..."
+                                placeholder="Search by serial, path..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="search-input"
@@ -139,7 +165,7 @@ export function CertificateManagement() {
                             onClick={() => setShowForm(true)}
                             disabled={loading}
                         >
-                            + Issue Certificate
+                            + Add New Certificate
                         </button>
                     </div>
 
@@ -164,10 +190,13 @@ export function CertificateManagement() {
                                     {filtered.length > 0 ? (
                                         filtered.map((cert) => {
                                             const isRevoked = !!cert.revokedOn;
+                                            const isExpired = cert.notAfter ? new Date(cert.notAfter) < new Date() : false;
+                                            const statusClass = isRevoked ? 'cert-revoked' : (isExpired ? 'cert-expired' : 'cert-active');
+
                                             return (
                                                 <tr
                                                     key={cert.id}
-                                                    className={isRevoked ? 'cert-revoked' : 'cert-active'}
+                                                    className={statusClass}
                                                 >
                                                     <td>{cert.serialNumber ?? '—'}</td>
                                                     <td className="mono-text">{cert.path}</td>
@@ -176,34 +205,27 @@ export function CertificateManagement() {
                                                             ? new Date(cert.issuedOn).toLocaleDateString()
                                                             : '—'}
                                                     </td>
-                                                    <td>
+                                                    <td className={isExpired ? 'expired-text' : ''}>
                                                         {cert.notAfter
                                                             ? new Date(cert.notAfter).toLocaleDateString()
                                                             : '—'}
                                                     </td>
                                                     <td>
                                                         <span
-                                                            className={`cert-badge ${isRevoked ? 'cert-revoked' : 'cert-active'}`}
+                                                            className={`cert-badge ${statusClass}`}
                                                         >
-                                                            {isRevoked ? 'Revoked' : 'Active'}
+                                                            {isRevoked ? 'Revoked' : (isExpired ? 'Expired' : 'Active')}
                                                         </span>
                                                     </td>
                                                     <td className="actions-cell">
-                                                        <button
-                                                            className="btn-icon"
-                                                            title="Edit"
-                                                            onClick={() => handleEdit(cert)}
-                                                            disabled={isRevoked}
-                                                        >
-                                                            ✎
-                                                        </button>
+
                                                         {!isRevoked && (
                                                             <button
-                                                                className="btn-icon revoke-btn"
-                                                                title="Revoke"
-                                                                onClick={() => cert.id && handleRevoke(cert.id)}
+                                                                className="btn btn-sm btn-danger"
+                                                                onClick={() => handleDelete(cert.id!)}
+                                                                disabled={loading}
                                                             >
-                                                                ✕
+                                                                Delete
                                                             </button>
                                                         )}
                                                     </td>

@@ -51,15 +51,8 @@ public class CertificateController {
         return ResponseEntity.ok(certificateService.getCertificate(id));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Certificate> update(@PathVariable Long applicationId, @PathVariable Long clientId,
-            @PathVariable Long id, @Valid @RequestBody Certificate certificate) {
-        Certificate updated = certificateService.update(applicationId, clientId, id, certificate);
-        return ResponseEntity.ok(updated);
-    }
-
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> revoke(@PathVariable Long applicationId, @PathVariable Long clientId,
+    public ResponseEntity<Void> delete(@PathVariable Long applicationId, @PathVariable Long clientId,
             @PathVariable Long id) {
         certificateService.delete(id);
         return ResponseEntity.noContent().build();
@@ -67,9 +60,10 @@ public class CertificateController {
 
     @GetMapping
     public ResponseEntity<PageResponse<Certificate>> listCertificates(@PathVariable Long applicationId,
-            @PathVariable Long clientId, @Valid PageRequest pageRequest) {
+            @PathVariable Long clientId, @RequestParam(required = false) String status,
+            @Valid PageRequest pageRequest) {
         PageResponse<Certificate> certificates = certificateService.listCertificates(applicationId, clientId,
-                pageRequest);
+                status, pageRequest);
         return ResponseEntity.ok(certificates);
     }
 

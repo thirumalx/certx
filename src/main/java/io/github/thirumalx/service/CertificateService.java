@@ -119,25 +119,6 @@ public class CertificateService {
     return getCertificate(certificateId);
   }
 
-  @Transactional
-  public Certificate update(Long applicationId, Long clientId, Long id, Certificate certificate) {
-    logger.info("Updating certificate: {} with ID: {}", certificate, id);
-    Optional<Certificate> existingOptional = certificateViewDao.findNowById(id);
-    if (existingOptional.isEmpty()) {
-      throw new ResourceNotFoundException("Certificate not found");
-    }
-    Certificate existing = existingOptional.get();
-
-    if (certificate.getSerialNumber() != null && !certificate.getSerialNumber().equals(existing.getSerialNumber())) {
-      serialNumberAttributeDao.insert(id, certificate.getSerialNumber(), Attribute.METADATA_ACTIVE);
-    }
-    if (certificate.getPath() != null && !certificate.getPath().equals(existing.getPath())) {
-      pathAttributeDao.insert(id, certificate.getPath(), Attribute.METADATA_ACTIVE);
-    }
-
-    return getCertificate(id);
-  }
-
   public Certificate getCertificate(Long id) {
     logger.debug("Getting certificate with ID: {}", id);
     return certificateViewDao.findNowById(id)
@@ -148,7 +129,6 @@ public class CertificateService {
   public boolean delete(Long id) {
     logger.info("Revoking certificate with ID: {}", id);
     statusAttributeDao.insert(id, Knot.DELETED, Instant.now(), Attribute.METADATA_ACTIVE);
-    revokedOnAttributeDao.insert(id, Instant.now(), Attribute.METADATA_ACTIVE);
     return true;
   }
 
@@ -183,11 +163,13 @@ public class CertificateService {
     return builder.build();
   }
 
-  public PageResponse<Certificate> listCertificates(Long applicationId, Long clientId, PageRequest pageRequest) {
-    logger.debug("Listing certificates for application: {} and client: {}", applicationId, clientId);
-    List<Certificate> certificates = certificateViewDao.listNowByClient(clientId, pageRequest.page(),
+  public PageResponse<Certificate> listCertificates(Long applicationId, Long clientId, String status,
+      PageRequest pageRequest) {
+    logger.debug("Listing certificates for application: {} and client: {} with status: {}", applicationId, clientId,
+        status);
+    List<Certificate> certificates = certificateViewDao.listNowByClient(clientId, status, pageRequest.page(),
         pageRequest.size());
-    long totalElements = certificateViewDao.countNowByClient(clientId);
+    long totalElements = certificateViewDao.countNowByClient(clientId, status);
     int totalPages = (int) Math.ceil((double) totalElements / pageRequest.size());
     return new PageResponse<>(pageRequest.page(), pageRequest.size(), certificates, totalElements, totalPages);
   }
