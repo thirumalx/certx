@@ -153,9 +153,9 @@ export function CertificateManagement() {
                                 <thead>
                                     <tr>
                                         <th>Serial Number</th>
-                                        <th>Owner Name</th>
                                         <th>Path</th>
                                         <th>Issued On</th>
+                                        <th>Not After</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -170,11 +170,15 @@ export function CertificateManagement() {
                                                     className={isRevoked ? 'cert-revoked' : 'cert-active'}
                                                 >
                                                     <td>{cert.serialNumber ?? '—'}</td>
-                                                    <td>{cert.ownerName}</td>
                                                     <td className="mono-text">{cert.path}</td>
                                                     <td>
                                                         {cert.issuedOn
                                                             ? new Date(cert.issuedOn).toLocaleDateString()
+                                                            : '—'}
+                                                    </td>
+                                                    <td>
+                                                        {cert.notAfter
+                                                            ? new Date(cert.notAfter).toLocaleDateString()
                                                             : '—'}
                                                     </td>
                                                     <td>

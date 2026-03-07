@@ -63,12 +63,36 @@ export function CertificateForm({
         }
         try {
             setIsValidating(true);
-            const isValid = await certificateService.validateCertificate(
+            const certDetails = await certificateService.validateCertificate(
                 applicationId,
                 clientId,
                 formData.path
             );
-            setValidationStatus(isValid ? 'success' : 'error');
+
+            // Auto-populate fields from the validated certificate
+            setFormData((prev) => ({
+                ...prev,
+                serialNumber: certDetails.serialNumber ?? prev.serialNumber,
+                issuedOn: certDetails.issuedOn
+                    ? certDetails.issuedOn.split('T')[0] + "T00:00:00"
+                    : prev.issuedOn,
+                notAfter: certDetails.notAfter
+                    ? certDetails.notAfter.split('T')[0] + "T00:00:00"
+                    : prev.notAfter,
+                lastTimeVerifiedOn: certDetails.lastTimeVerifiedOn
+                    ? certDetails.lastTimeVerifiedOn.split('T')[0] + "T00:00:00"
+                    : new Date().toISOString().slice(0, 19),
+            }));
+
+            setValidationStatus('success');
+            // Clear errors for fields that might have been populated
+            setErrors((prev) => {
+                const newErrors = { ...prev };
+                if (certDetails.serialNumber) delete newErrors.serialNumber;
+                if (certDetails.notAfter) delete newErrors.notAfter;
+                delete newErrors.path;
+                return newErrors;
+            });
         } catch {
             setValidationStatus('error');
         } finally {

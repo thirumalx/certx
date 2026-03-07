@@ -1,6 +1,7 @@
 package io.github.thirumalx.dao.view;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -101,19 +102,20 @@ public class CertificateViewDao extends ViewDao<Certificate> {
     @Override
     protected RowMapper<Certificate> rowMapper() {
         return (rs, rowNum) -> {
-            Instant issuedOnOdt = rs.getObject(ViewColumns.CertificateNow.ISSUED_ON, Instant.class);
-            Instant revokedOnOdt = rs.getObject(ViewColumns.CertificateNow.REVOKED_ON, Instant.class);
-            Instant notAfterOdt = rs.getObject(ViewColumns.CertificateNow.NOT_AFTER, Instant.class);
-            Instant lastTimeVerifiedOnOdt = rs.getObject(ViewColumns.CertificateNow.LAST_TIME_VERIFIED_ON,
-                    Instant.class);
+            OffsetDateTime issuedOn = rs.getObject(ViewColumns.CertificateNow.ISSUED_ON, OffsetDateTime.class);
+            OffsetDateTime revokedOn = rs.getObject(ViewColumns.CertificateNow.REVOKED_ON, OffsetDateTime.class);
+            OffsetDateTime notAfter = rs.getObject(ViewColumns.CertificateNow.NOT_AFTER, OffsetDateTime.class);
+            OffsetDateTime lastTimeVerifiedOn = rs.getObject(ViewColumns.CertificateNow.LAST_TIME_VERIFIED_ON,
+                    OffsetDateTime.class);
+
             return Certificate.builder()
                     .id(rs.getLong(ViewColumns.CertificateNow.ID))
                     .serialNumber(rs.getString(ViewColumns.CertificateNow.SERIAL_NUMBER))
                     .path(rs.getString(ViewColumns.CertificateNow.CERTIFICATE_PATH))
-                    .issuedOn(issuedOnOdt)
-                    .revokedOn(revokedOnOdt)
-                    .notAfter(notAfterOdt)
-                    .lastTimeVerifiedOn(lastTimeVerifiedOnOdt)
+                    .issuedOn(issuedOn != null ? issuedOn.toLocalDateTime() : null)
+                    .revokedOn(revokedOn != null ? revokedOn.toLocalDateTime() : null)
+                    .notAfter(notAfter != null ? notAfter.toLocalDateTime() : null)
+                    .lastTimeVerifiedOn(lastTimeVerifiedOn != null ? lastTimeVerifiedOn.toLocalDateTime() : null)
                     .status(rs.getString(ViewColumns.CertificateNow.STATUS_ID_COL))
                     .build();
         };

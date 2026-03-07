@@ -1,30 +1,32 @@
 package io.github.thirumalx.dto;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Thirumal
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Certificate {
 
     private Long id;
     @NotNull
     private String serialNumber;
     @NotNull
-    private String path;
+    private String path; // Certificate path
     private String ownerName;// Equivalent to client name in the database
-    @NotNull
-    private Instant issuedOn;
-    private Instant revokedOn;
-    @NotNull
-    private Instant notAfter;
-    private Instant lastTimeVerifiedOn;
+    private LocalDateTime issuedOn;
+    private LocalDateTime revokedOn;
+    private LocalDateTime notAfter;
+    private LocalDateTime lastTimeVerifiedOn;
     @NotNull
     private String status;
 
@@ -39,7 +41,7 @@ public class Certificate {
      * @return true if the certificate is valid
      */
     public boolean isCertificateValid() {
-        return !isRevoked() && Instant.now().isBefore(notAfter);
+        return !isRevoked() && notAfter != null && LocalDateTime.now().isBefore(notAfter);
     }
 
 }

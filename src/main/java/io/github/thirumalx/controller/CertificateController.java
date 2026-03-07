@@ -74,9 +74,10 @@ public class CertificateController {
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<Boolean> validatePath(@PathVariable Long applicationId, @PathVariable Long clientId,
+    public ResponseEntity<Certificate> validateCertificate(@PathVariable Long applicationId,
+            @PathVariable Long clientId,
             @RequestParam String path) {
-        return ResponseEntity.ok(certificateService.validatePath(path));
+        return ResponseEntity.ok(certificateService.validateCertificate(path));
     }
 
 }

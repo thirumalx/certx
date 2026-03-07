@@ -30,6 +30,13 @@ import io.github.thirumalx.model.Attribute;
 import io.github.thirumalx.model.Knot;
 import java.io.File;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 
 /**
  * @author Thirumal
@@ -98,14 +105,16 @@ public class CertificateService {
     if (certificate.getPath() != null) {
       pathAttributeDao.insert(certificateId, certificate.getPath(), Attribute.METADATA_ACTIVE);
     }
-    statusAttributeDao.insert(certificateId, certificate.getStatus(), Instant.now(), Attribute.METADATA_ACTIVE);
-    issuedOnAttributeDao.insert(certificateId, certificate.getIssuedOn(), Attribute.METADATA_ACTIVE);
-    notAfterAttributeDao.insert(certificateId, certificate.getNotAfter(), Attribute.METADATA_ACTIVE);
-    lastTimeVerifiedOnAttributeDao.insert(certificateId, certificate.getLastTimeVerifiedOn(),
+    statusAttributeDao.insert(certificateId, Knot.ACTIVE, Instant.now(), Attribute.METADATA_ACTIVE);
+    issuedOnAttributeDao.insert(certificateId, certificate.getIssuedOn().toInstant(ZoneOffset.UTC),
+        Attribute.METADATA_ACTIVE);
+    notAfterAttributeDao.insert(certificateId, certificate.getNotAfter().toInstant(ZoneOffset.UTC),
+        Attribute.METADATA_ACTIVE);
+    lastTimeVerifiedOnAttributeDao.insert(certificateId, certificate.getLastTimeVerifiedOn().toInstant(ZoneOffset.UTC),
         Attribute.METADATA_ACTIVE);
 
     // Tie
-    certificateClientTieDao.insertHistorized(certificateId, clientId, Attribute.METADATA_ACTIVE, Instant.now());
+    certificateClientTieDao.insert(certificateId, clientId, Attribute.METADATA_ACTIVE);
 
     return getCertificate(certificateId);
   }
@@ -143,14 +152,35 @@ public class CertificateService {
     return true;
   }
 
-  public boolean validatePath(String path) {
+  public Certificate validateCertificate(String path) {
     if (path == null || path.isEmpty()) {
-      return false;
+      throw new IllegalArgumentException("Path cannot be empty");
     }
-    String basePath = "C:\\IUShare\\amFzZ2R1NjEyODN0MTI4OXNkYmZ\\Certificate";
-    File file = new File(basePath, path);
+    File file = new File(path);
     logger.debug("Validating certificate path: {}", file.getAbsolutePath());
-    return file.exists();
+    if (!file.exists()) {
+      throw new ResourceNotFoundException("Certificate file not found at " + file.getAbsolutePath());
+    }
+
+    Certificate.CertificateBuilder builder = Certificate.builder()
+        .path(path)
+        .lastTimeVerifiedOn(LocalDateTime.now())
+        .status("ACTIVE");
+
+    try (InputStream is = new FileInputStream(file)) {
+      CertificateFactory cf = CertificateFactory.getInstance("X.509");
+      X509Certificate cert = (X509Certificate) cf.generateCertificate(is);
+      builder.serialNumber(cert.getSerialNumber().toString())
+          .issuedOn(LocalDateTime.ofInstant(cert.getNotBefore().toInstant(), ZoneId.systemDefault()))
+          .notAfter(LocalDateTime.ofInstant(cert.getNotAfter().toInstant(), ZoneId.systemDefault()));
+      logger.debug("Successfully parsed certificate: {}", path);
+    } catch (Exception e) {
+      logger.error("Error parsing certificate: {}. Error: {}", path, e.getMessage());
+      // We still return basic info if parsing fails (e.g. for PFX files which need
+      // password)
+      throw new RuntimeException("Error parsing certificate: " + e.getMessage());
+    }
+    return builder.build();
   }
 
   public PageResponse<Certificate> listCertificates(Long applicationId, Long clientId, PageRequest pageRequest) {

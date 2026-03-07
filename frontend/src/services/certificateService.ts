@@ -94,9 +94,9 @@ export const certificateService = {
     },
 
     /**
-     * Validate certificate path
+     * Validate certificate path and get details
      */
-    validateCertificate: async (appId: number, clientId: number, path: string): Promise<boolean> => {
+    validateCertificate: async (appId: number, clientId: number, path: string): Promise<Certificate> => {
         const response = await fetch(`${API_BASE}/application/${appId}/client/${clientId}/certificate/validate?path=${encodeURIComponent(path)}`, {
             method: 'POST',
         });
