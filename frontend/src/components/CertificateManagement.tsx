@@ -299,6 +299,55 @@ export function CertificateManagement() {
                         </div>
                     )}
 
+                    {!showForm && (
+                        <div className="pagination">
+                            <button
+                                className="btn btn-sm btn-outline"
+                                onClick={() => loadCertificates(paging.page - 1)}
+                                disabled={paging.page === 0 || loading}
+                            >
+                                Previous
+                            </button>
+
+                            <div className="page-numbers">
+                                {Array.from({ length: Math.min(5, Math.ceil(paging.total / paging.size)) }, (_, i) => {
+                                    const totalPages = Math.ceil(paging.total / paging.size);
+                                    let pageNum = i;
+                                    if (totalPages > 5) {
+                                        if (paging.page > 2) pageNum = paging.page - 2 + i;
+                                        if (pageNum >= totalPages) pageNum = totalPages - 5 + i;
+                                        if (pageNum < 0) pageNum = i;
+                                    }
+
+                                    if (pageNum >= totalPages) return null;
+
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            className={`page-btn ${paging.page === pageNum ? 'active' : ''}`}
+                                            onClick={() => loadCertificates(pageNum)}
+                                            disabled={loading}
+                                        >
+                                            {pageNum + 1}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <button
+                                className="btn btn-sm btn-outline"
+                                onClick={() => loadCertificates(paging.page + 1)}
+                                disabled={paging.page >= Math.ceil(paging.total / paging.size) - 1 || loading}
+                            >
+                                Next
+                            </button>
+
+                            <span className="page-info">
+                                Page {paging.page + 1} of {Math.max(1, Math.ceil(paging.total / paging.size))} ({paging.total} items)
+                            </span>
+                        </div>
+                    )}
+
                     {showForm && (
                         <CertificateForm
                             certificate={editingCert || undefined}

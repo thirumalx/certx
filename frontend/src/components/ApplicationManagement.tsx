@@ -272,22 +272,49 @@ export function ApplicationManagement() {
 
               <div className="pagination">
                 <button
-                  className="btn btn-sm"
+                  className="btn btn-sm btn-outline"
                   onClick={() => loadApplications(currentPage - 1)}
                   disabled={currentPage === 0 || loading}
                 >
                   Previous
                 </button>
-                <span className="page-info">
-                  Page {currentPage + 1} of {Math.max(1, totalPages)}
-                </span>
+
+                <div className="page-numbers">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    // Show up to 5 pages around current page if possible
+                    let pageNum = i;
+                    if (totalPages > 5) {
+                      if (currentPage > 2) pageNum = currentPage - 2 + i;
+                      if (pageNum >= totalPages) pageNum = totalPages - 5 + i;
+                      if (pageNum < 0) pageNum = i;
+                    }
+
+                    if (pageNum >= totalPages) return null;
+
+                    return (
+                      <button
+                        key={pageNum}
+                        className={`page-btn ${currentPage === pageNum ? 'active' : ''}`}
+                        onClick={() => loadApplications(pageNum)}
+                        disabled={loading}
+                      >
+                        {pageNum + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <button
-                  className="btn btn-sm"
+                  className="btn btn-sm btn-outline"
                   onClick={() => loadApplications(currentPage + 1)}
                   disabled={currentPage >= totalPages - 1 || loading}
                 >
                   Next
                 </button>
+
+                <span className="page-info">
+                  Page {currentPage + 1} of {Math.max(1, totalPages)} ({totalElements} items)
+                </span>
               </div>
             </>
           )}

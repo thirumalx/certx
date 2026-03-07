@@ -134,7 +134,7 @@ public class CertificateService {
     return true;
   }
 
-  public Certificate validateCertificate(String path) {
+  public Certificate validateCertificate(String path, String password) {
     if (path == null || path.isEmpty()) {
       throw new IllegalArgumentException("Path cannot be empty");
     }
@@ -153,8 +153,9 @@ public class CertificateService {
       if (path.toLowerCase().endsWith(".pfx") || path.toLowerCase().endsWith(".p12")) {
         logger.debug("Parsing PFX/P12 certificate: {}", path);
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        // Try with empty password as default for validation
-        keyStore.load(is, "".toCharArray());
+        // Try with provided password
+        char[] passwordChars = (password != null) ? password.toCharArray() : "".toCharArray();
+        keyStore.load(is, passwordChars);
         Enumeration<String> aliases = keyStore.aliases();
         while (aliases.hasMoreElements()) {
           String alias = aliases.nextElement();

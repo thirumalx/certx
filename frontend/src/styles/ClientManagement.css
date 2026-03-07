@@ -280,17 +280,7 @@
   background-color: #fafafa;
 }
 
-/* Pagination */
-.pagination {
-  display: flex;
-  justify-content: right;
-  align-items: center;
-  gap: 15px;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
+/* Pagination moved to index.css */
 
 .page-info {
   font-size: 14px;

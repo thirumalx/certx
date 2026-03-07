@@ -35,8 +35,12 @@ export function CertificateForm({
         }
     );
 
+    const [password, setPassword] = useState('');
+    const [isPfx, setIsPfx] = useState(false);
+
     const [isValidating, setIsValidating] = useState(false);
     const [validationStatus, setValidationStatus] = useState<'success' | 'error' | null>(null);
+    const [validationMessage, setValidationMessage] = useState<string | null>(null);
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -55,7 +59,11 @@ export function CertificateForm({
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
-        if (name === 'path') setValidationStatus(null);
+        if (name === 'path') {
+            setValidationStatus(null);
+            setValidationMessage(null);
+            setIsPfx(value.toLowerCase().endsWith('.pfx') || value.toLowerCase().endsWith('.p12'));
+        }
     };
 
     const handleValidate = async () => {
@@ -65,11 +73,20 @@ export function CertificateForm({
         }
         try {
             setIsValidating(true);
+            setValidationMessage(null);
             const certDetails = await certificateService.validateCertificate(
                 applicationId,
                 clientId,
-                formData.path
+                formData.path,
+                password
             );
+
+            if (certDetails.serialNumber === 'PASSWORD_PROTECTED_PFX') {
+                setValidationStatus('error');
+                setValidationMessage('Password required or incorrect for this PFX file');
+                setErrors((prev) => ({ ...prev, password: 'Password required or incorrect for this PFX file' }));
+                return;
+            }
 
             // Auto-populate fields from the validated certificate
             setFormData((prev) => ({
@@ -87,16 +104,19 @@ export function CertificateForm({
             }));
 
             setValidationStatus('success');
+            setValidationMessage('Certificate details fetched successfully!');
             // Clear errors for fields that might have been populated
             setErrors((prev) => {
                 const newErrors = { ...prev };
                 if (certDetails.serialNumber) delete newErrors.serialNumber;
                 if (certDetails.notAfter) delete newErrors.notAfter;
                 delete newErrors.path;
+                delete newErrors.password;
                 return newErrors;
             });
-        } catch {
+        } catch (err) {
             setValidationStatus('error');
+            setValidationMessage(err instanceof Error ? err.message : 'Validation failed');
         } finally {
             setIsValidating(false);
         }
@@ -137,11 +157,10 @@ export function CertificateForm({
                                     </button>
                                 )}
                             </div>
-                            {validationStatus === 'success' && (
-                                <span className="success-message">File found in directory!</span>
-                            )}
-                            {validationStatus === 'error' && (
-                                <span className="error-message">File NOT found in directory</span>
+                            {validationMessage && (
+                                <span className={validationStatus === 'success' ? 'success-message' : 'error-message'}>
+                                    {validationMessage}
+                                </span>
                             )}
                             {errors.path && <span className="error-message">{errors.path}</span>}
                         </div>
@@ -161,6 +180,26 @@ export function CertificateForm({
                             {errors.serialNumber && <span className="error-message">{errors.serialNumber}</span>}
                         </div>
                     </div>
+
+                    {isPfx && !readOnly && (
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label htmlFor="pfx-password">PFX Password</label>
+                                <input
+                                    type="password"
+                                    id="pfx-password"
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
+                                    }}
+                                    placeholder="Enter password if required"
+                                />
+                                {errors.password && <span className="error-message">{errors.password}</span>}
+                            </div>
+                            <div className="form-group placeholder-group"></div>
+                        </div>
+                    )}
 
                     <div className="form-row">
                         <div className="form-group">

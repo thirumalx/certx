@@ -70,8 +70,9 @@ public class CertificateController {
     @PostMapping("/validate")
     public ResponseEntity<Certificate> validateCertificate(@PathVariable Long applicationId,
             @PathVariable Long clientId,
-            @RequestParam String path) {
-        return ResponseEntity.ok(certificateService.validateCertificate(path));
+            @RequestParam String path,
+            @RequestParam(required = false) String password) {
+        return ResponseEntity.ok(certificateService.validateCertificate(path, password));
     }
 
 }
