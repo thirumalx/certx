@@ -22,8 +22,10 @@ export function CertificateManagement() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
+    const [editingCert, setEditingCert] = useState<Certificate | null>(null);
     const [formLoading, setFormLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [paging, setPaging] = useState({ page: 0, size: 10, total: 0 });
 
     // Load client info for the heading
     useEffect(() => {
@@ -35,15 +37,15 @@ export function CertificateManagement() {
     }, [appId, cId]);
 
     // Fetch certificate detail for this client using ownerName lookup
-    const loadCertificates = async () => {
-        if (!clientName) return;
+    const loadCertificates = async (page = 0) => {
         try {
             setLoading(true);
             setError(null);
-            const cert = await certificateService.getCertificateDetail({ ownerName: clientName });
-            setCertificates(cert ? [cert] : []);
-        } catch {
-            // No certificate found — show empty table
+            const data = await certificateService.listCertificates(appId, cId, page, paging.size);
+            setCertificates(data.content);
+            setPaging((prev) => ({ ...prev, page, total: data.totalElements }));
+        } catch (err) {
+            setError('Failed to load certificates');
             setCertificates([]);
         } finally {
             setLoading(false);
@@ -51,33 +53,47 @@ export function CertificateManagement() {
     };
 
     useEffect(() => {
-        if (clientName) loadCertificates();
-    }, [clientName]);
+        loadCertificates();
+    }, [appId, cId]);
 
     const handleFormSubmit = async (certData: Certificate) => {
         try {
             setFormLoading(true);
             setError(null);
-            const saved = await certificateService.saveCertificate({
-                ...certData,
-                ownerName: certData.ownerName || clientName,
-                clientId: cId,
-            });
-            setCertificates((prev) => {
-                const idx = prev.findIndex((c) => c.serialNumber === saved.serialNumber);
-                if (idx >= 0) {
-                    const updated = [...prev];
-                    updated[idx] = saved;
-                    return updated;
-                }
-                return [...prev, saved];
-            });
+            if (certData.id) {
+                await certificateService.updateCertificate(appId, cId, certData.id, certData);
+            } else {
+                await certificateService.saveCertificate(appId, cId, {
+                    ...certData,
+                    clientId: cId,
+                });
+            }
             setShowForm(false);
+            setEditingCert(null);
+            loadCertificates(paging.page);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to save certificate');
         } finally {
             setFormLoading(false);
         }
+    };
+
+    const handleRevoke = async (id: number) => {
+        if (!window.confirm('Are you sure you want to revoke this certificate?')) return;
+        try {
+            setLoading(true);
+            await certificateService.deleteCertificate(appId, cId, id);
+            loadCertificates(paging.page);
+        } catch (err) {
+            setError('Failed to revoke certificate');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleEdit = (cert: Certificate) => {
+        setEditingCert(cert);
+        setShowForm(true);
     };
 
     const filtered = certificates.filter((c) => {
@@ -141,20 +157,21 @@ export function CertificateManagement() {
                                         <th>Path</th>
                                         <th>Issued On</th>
                                         <th>Status</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filtered.length > 0 ? (
-                                        filtered.map((cert, idx) => {
+                                        filtered.map((cert) => {
                                             const isRevoked = !!cert.revokedOn;
                                             return (
                                                 <tr
-                                                    key={cert.serialNumber ?? idx}
+                                                    key={cert.id}
                                                     className={isRevoked ? 'cert-revoked' : 'cert-active'}
                                                 >
                                                     <td>{cert.serialNumber ?? '—'}</td>
                                                     <td>{cert.ownerName}</td>
-                                                    <td>{cert.path}</td>
+                                                    <td className="mono-text">{cert.path}</td>
                                                     <td>
                                                         {cert.issuedOn
                                                             ? new Date(cert.issuedOn).toLocaleDateString()
@@ -167,12 +184,31 @@ export function CertificateManagement() {
                                                             {isRevoked ? 'Revoked' : 'Active'}
                                                         </span>
                                                     </td>
+                                                    <td className="actions-cell">
+                                                        <button
+                                                            className="btn-icon"
+                                                            title="Edit"
+                                                            onClick={() => handleEdit(cert)}
+                                                            disabled={isRevoked}
+                                                        >
+                                                            ✎
+                                                        </button>
+                                                        {!isRevoked && (
+                                                            <button
+                                                                className="btn-icon revoke-btn"
+                                                                title="Revoke"
+                                                                onClick={() => cert.id && handleRevoke(cert.id)}
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        )}
+                                                    </td>
                                                 </tr>
                                             );
                                         })
                                     ) : (
                                         <tr>
-                                            <td colSpan={5} className="no-data">
+                                            <td colSpan={6} className="no-data">
                                                 {searchTerm
                                                     ? 'No certificates match your search'
                                                     : 'No certificates yet — click "+ Issue Certificate" to create one'}
@@ -186,10 +222,14 @@ export function CertificateManagement() {
 
                     {showForm && (
                         <CertificateForm
+                            certificate={editingCert || undefined}
+                            applicationId={appId}
+                            clientId={cId}
                             defaultOwnerName={clientName}
                             onSubmit={handleFormSubmit}
                             onCancel={() => {
                                 setShowForm(false);
+                                setEditingCert(null);
                                 setError(null);
                             }}
                             loading={formLoading}

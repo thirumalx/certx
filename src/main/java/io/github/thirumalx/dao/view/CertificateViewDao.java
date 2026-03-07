@@ -1,6 +1,6 @@
 package io.github.thirumalx.dao.view;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -101,13 +101,20 @@ public class CertificateViewDao extends ViewDao<Certificate> {
     @Override
     protected RowMapper<Certificate> rowMapper() {
         return (rs, rowNum) -> {
-            OffsetDateTime issuedOnOdt = rs.getObject(ViewColumns.CertificateNow.ISSUED_ON, OffsetDateTime.class);
-            OffsetDateTime revokedOnOdt = rs.getObject(ViewColumns.CertificateNow.REVOKED_ON, OffsetDateTime.class);
+            Instant issuedOnOdt = rs.getObject(ViewColumns.CertificateNow.ISSUED_ON, Instant.class);
+            Instant revokedOnOdt = rs.getObject(ViewColumns.CertificateNow.REVOKED_ON, Instant.class);
+            Instant notAfterOdt = rs.getObject(ViewColumns.CertificateNow.NOT_AFTER, Instant.class);
+            Instant lastTimeVerifiedOnOdt = rs.getObject(ViewColumns.CertificateNow.LAST_TIME_VERIFIED_ON,
+                    Instant.class);
             return Certificate.builder()
+                    .id(rs.getLong(ViewColumns.CertificateNow.ID))
                     .serialNumber(rs.getString(ViewColumns.CertificateNow.SERIAL_NUMBER))
                     .path(rs.getString(ViewColumns.CertificateNow.CERTIFICATE_PATH))
-                    .issuedOn(issuedOnOdt != null ? issuedOnOdt.toLocalDateTime() : null)
-                    .revokedOn(revokedOnOdt != null ? revokedOnOdt.toLocalDateTime() : null)
+                    .issuedOn(issuedOnOdt)
+                    .revokedOn(revokedOnOdt)
+                    .notAfter(notAfterOdt)
+                    .lastTimeVerifiedOn(lastTimeVerifiedOnOdt)
+                    .status(rs.getString(ViewColumns.CertificateNow.STATUS_ID_COL))
                     .build();
         };
     }
