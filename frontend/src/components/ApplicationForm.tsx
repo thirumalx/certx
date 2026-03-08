@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { type Application } from '../services/applicationService';
 import '../styles/ApplicationForm.css';
 
