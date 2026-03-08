@@ -6,7 +6,13 @@ import {
 import { dashboardService, type DashboardStats } from '../services/dashboardService';
 import '../styles/Dashboard.css';
 
-const COLORS = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f'];
+const STATUS_COLORS: { [key: string]: string } = {
+    'Active': '#2ecc71',
+    'Expired': '#f39c12',
+    'Deleted': '#e74c3c'
+};
+
+const DEFAULT_COLORS = ['#3498db', '#9b59b6', '#1abc9c', '#f1c40f'];
 
 export function Dashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -73,8 +79,11 @@ export function Dashboard() {
                                     nameKey="status"
                                     label
                                 >
-                                    {stats.statusDistribution.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    {stats.statusDistribution.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-${index}`}
+                                            fill={STATUS_COLORS[entry.status] || DEFAULT_COLORS[index % DEFAULT_COLORS.length]}
+                                        />
                                     ))}
                                 </Pie>
                                 <Tooltip />
@@ -99,7 +108,7 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                <div className="chart-card" style={{ gridColumn: 'span 2' }}>
+                <div className="chart-card" style={{ gridColumn: '1 / -1' }}>
                     <h3 className="chart-title">Top Applications by Certificate Count</h3>
                     <div className="chart-wrapper">
                         <ResponsiveContainer width="100%" height="100%">

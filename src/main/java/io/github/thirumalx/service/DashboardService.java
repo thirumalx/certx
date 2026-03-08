@@ -33,12 +33,14 @@ public class DashboardService {
 
                 // Status Distribution
                 List<DashboardStats.StatusCount> statusDistribution = jdbc.sql(
-                                "SELECT CASE WHEN " + ViewColumns.CertificateNow.STATUS_ID_COL
-                                                + " = :active THEN 'Active' ELSE 'Deleted' END as status, count(*) as count "
-                                                +
-                                                "FROM " + ViewColumns.CertificateNow.TABLE + " GROUP BY "
-                                                + ViewColumns.CertificateNow.STATUS_ID_COL)
-                                .param("active", Knot.ACTIVE)
+                                "SELECT CASE " +
+                                                "WHEN " + ViewColumns.CertificateNow.STATUS_ID_COL
+                                                + " = :deleted THEN 'Deleted' " +
+                                                "WHEN " + ViewColumns.CertificateNow.REVOKED_ON + " IS NULL AND "
+                                                + ViewColumns.CertificateNow.NOT_AFTER + " < NOW() THEN 'Expired' " +
+                                                "ELSE 'Active' END as status, count(*) as count " +
+                                                "FROM " + ViewColumns.CertificateNow.TABLE + " GROUP BY status")
+                                .param("deleted", Knot.DELETED)
                                 .query((rs, rowNum) -> new DashboardStats.StatusCount(rs.getString("status"),
                                                 rs.getLong("count")))
                                 .list();
