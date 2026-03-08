@@ -17,51 +17,59 @@ import io.github.thirumalx.model.Knot;
 @Service
 public class DashboardService {
 
-    private final Logger logger = LoggerFactory.getLogger(DashboardService.class);
-    private final JdbcClient jdbc;
+        private final Logger logger = LoggerFactory.getLogger(DashboardService.class);
+        private final JdbcClient jdbc;
 
-    public DashboardService(JdbcClient jdbc) {
-        this.jdbc = jdbc;
-    }
+        public DashboardService(JdbcClient jdbc) {
+                this.jdbc = jdbc;
+        }
 
-    public DashboardStats getStats() {
-        logger.debug("Fetching dashboard statistics");
+        public DashboardStats getStats() {
+                logger.debug("Fetching dashboard statistics");
 
-        long totalApps = jdbc.sql("SELECT count(*) FROM certx.nAP_Application").query(Long.class).single();
-        long totalClients = jdbc.sql("SELECT count(*) FROM certx.nCL_Client").query(Long.class).single();
-        long totalCerts = jdbc.sql("SELECT count(*) FROM certx.nCE_Certificate").query(Long.class).single();
+                long totalApps = jdbc.sql("SELECT count(*) FROM certx.nAP_Application").query(Long.class).single();
+                long totalClients = jdbc.sql("SELECT count(*) FROM certx.nCL_Client").query(Long.class).single();
+                long totalCerts = jdbc.sql("SELECT count(*) FROM certx.nCE_Certificate").query(Long.class).single();
 
-        // Status Distribution
-        List<DashboardStats.StatusCount> statusDistribution = jdbc.sql(
-                "SELECT CASE WHEN " + ViewColumns.CertificateNow.STATUS_ID_COL
-                        + " = :active THEN 'Active' ELSE 'Deleted' END as status, count(*) as count " +
-                        "FROM " + ViewColumns.CertificateNow.TABLE + " GROUP BY "
-                        + ViewColumns.CertificateNow.STATUS_ID_COL)
-                .param("active", Knot.ACTIVE)
-                .query((rs, rowNum) -> new DashboardStats.StatusCount(rs.getString("status"), rs.getLong("count")))
-                .list();
+                // Status Distribution
+                List<DashboardStats.StatusCount> statusDistribution = jdbc.sql(
+                                "SELECT CASE WHEN " + ViewColumns.CertificateNow.STATUS_ID_COL
+                                                + " = :active THEN 'Active' ELSE 'Deleted' END as status, count(*) as count "
+                                                +
+                                                "FROM " + ViewColumns.CertificateNow.TABLE + " GROUP BY "
+                                                + ViewColumns.CertificateNow.STATUS_ID_COL)
+                                .param("active", Knot.ACTIVE)
+                                .query((rs, rowNum) -> new DashboardStats.StatusCount(rs.getString("status"),
+                                                rs.getLong("count")))
+                                .list();
 
-        // Expiry Stats (Next 6 months)
-        List<DashboardStats.ExpiryCount> expiryStats = jdbc.sql(
-                "SELECT FORMATDATETIME(" + ViewColumns.CertificateNow.NOT_AFTER
-                        + ", 'YYYY-MM') as month, count(*) as count " +
-                        "FROM " + ViewColumns.CertificateNow.TABLE + " " +
-                        "WHERE " + ViewColumns.CertificateNow.NOT_AFTER + " >= NOW() " +
-                        "GROUP BY month ORDER BY month LIMIT 6")
-                .query((rs, rowNum) -> new DashboardStats.ExpiryCount(rs.getString("month"), rs.getLong("count")))
-                .list();
+                // Expiry Stats (Next 6 months)
+                List<DashboardStats.ExpiryCount> expiryStats = jdbc.sql(
+                                "SELECT TO_CHAR(" + ViewColumns.CertificateNow.NOT_AFTER
+                                                + ", 'YYYY-MM') as month, count(*) as count " +
+                                                "FROM " + ViewColumns.CertificateNow.TABLE + " " +
+                                                "WHERE " + ViewColumns.CertificateNow.NOT_AFTER + " >= NOW() " +
+                                                "GROUP BY month ORDER BY month LIMIT 6")
+                                .query((rs, rowNum) -> new DashboardStats.ExpiryCount(rs.getString("month"),
+                                                rs.getLong("count")))
+                                .list();
 
-        // Top Applications (by cert count)
-        List<DashboardStats.AppCount> topApps = jdbc.sql(
-                "SELECT a." + ViewColumns.ApplicationNow.NAME + " as name, count(ce.CE_ID) as count " +
-                        "FROM " + ViewColumns.ApplicationNow.TABLE + " a " +
-                        "JOIN certx.ap_serves_cl_servedby tie1 ON a.AP_ID = tie1.ap_id_serves " +
-                        "JOIN certx.ce_belongsto_cl_owns tie2 ON tie1.cl_id_servedby = tie2.cl_id_owns " +
-                        "JOIN " + ViewColumns.CertificateNow.TABLE + " ce ON tie2.ce_id_belongsto = ce.CE_ID " +
-                        "GROUP BY a.AP_ID ORDER BY count DESC LIMIT 5")
-                .query((rs, rowNum) -> new DashboardStats.AppCount(rs.getString("name"), rs.getLong("count")))
-                .list();
+                // Top Applications (by cert count)
+                List<DashboardStats.AppCount> topApps = jdbc.sql(
+                                "SELECT a." + ViewColumns.ApplicationNow.NAME + " as name, count(ce.CE_ID) as count " +
+                                                "FROM " + ViewColumns.ApplicationNow.TABLE + " a " +
+                                                "JOIN certx.ap_serves_cl_servedby tie1 ON a.AP_ID = tie1.ap_id_serves "
+                                                +
+                                                "JOIN certx.ce_belongsto_cl_owns tie2 ON tie1.cl_id_servedby = tie2.cl_id_owns "
+                                                +
+                                                "JOIN " + ViewColumns.CertificateNow.TABLE
+                                                + " ce ON tie2.ce_id_belongsto = ce.CE_ID " +
+                                                "GROUP BY a.AP_ID, a.AP_NAM_Application_Name ORDER BY count DESC LIMIT 5")
+                                .query((rs, rowNum) -> new DashboardStats.AppCount(rs.getString("name"),
+                                                rs.getLong("count")))
+                                .list();
 
-        return new DashboardStats(totalApps, totalClients, totalCerts, statusDistribution, expiryStats, topApps);
-    }
+                return new DashboardStats(totalApps, totalClients, totalCerts, statusDistribution, expiryStats,
+                                topApps);
+        }
 }
