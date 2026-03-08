@@ -43,6 +43,7 @@ public interface ViewColumns {
         String LAST_TIME_VERIFIED_ON = "CE_LTV_Certificate_LastTimeVerifiedOn";
         String STATUS_ID_COL = "ce_sta_sta_id";
         String STATUS = "CE_STA_STA_Status";
+        String PASSWORD = "CE_PAS_Certificate_Password";
     }
 
     interface CertificateNow {
@@ -56,5 +57,6 @@ public interface ViewColumns {
         String LAST_TIME_VERIFIED_ON = "CE_LTV_Certificate_LastTimeVerifiedOn";
         String STATUS_ID_COL = "ce_sta_sta_id";
         String STATUS = "CE_STA_STA_Status";
+        String PASSWORD = "CE_PAS_Certificate_Password";
     }
 }

@@ -145,6 +145,7 @@ public class CertificateViewDao extends ViewDao<Certificate> {
                     .notAfter(notAfter != null ? notAfter.toLocalDateTime() : null)
                     .lastTimeVerifiedOn(lastTimeVerifiedOn != null ? lastTimeVerifiedOn.toLocalDateTime() : null)
                     .status(rs.getString(ViewColumns.CertificateNow.STATUS_ID_COL))
+                    .password(rs.getString(ViewColumns.CertificateNow.PASSWORD))
                     .build();
         };
     }

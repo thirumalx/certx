@@ -22,4 +22,10 @@ public interface AnchorColumns {
         String ID = "ce_id";
         String METADATA = "metadata_ce";
     }
+
+    interface Notification {
+        String TABLE = "certx.nt_notification";
+        String ID = "nt_id";
+        String METADATA = "metadata_nt";
+    }
 }

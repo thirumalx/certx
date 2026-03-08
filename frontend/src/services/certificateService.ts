@@ -16,6 +16,7 @@ export interface Certificate {
     lastTimeVerifiedOn?: string;
     status?: string;
     clientId?: number;
+    password?: string;
 }
 
 const CERT_URL = `${API_BASE}/certificate`;
@@ -125,6 +126,17 @@ export const certificateService = {
         });
         if (!response.ok) {
             throw new Error('Failed to fetch certificate detail');
+        }
+        return response.json();
+    },
+
+    /**
+     * Fetch notification history for a certificate
+     */
+    getNotifications: async (certificateId: number): Promise<any[]> => {
+        const response = await fetch(`${API_BASE}/notifications/certificate/${certificateId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch notifications');
         }
         return response.json();
     },

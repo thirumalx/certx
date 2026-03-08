@@ -13,6 +13,7 @@ import io.github.thirumalx.dao.anchor.CertificateAnchorDao;
 import io.github.thirumalx.dao.attribute.CertificateIssuedOnAttributeDao;
 import io.github.thirumalx.dao.attribute.CertificateLastTimeVerifiedOnAttributeDao;
 import io.github.thirumalx.dao.attribute.CertificateNotAfterAttributeDao;
+import io.github.thirumalx.dao.attribute.CertificatePasswordAttributeDao;
 import io.github.thirumalx.dao.attribute.CertificatePathAttributeDao;
 import io.github.thirumalx.dao.attribute.CertificateRevokedOnAttributeDao;
 import io.github.thirumalx.dao.attribute.CertificateSerialNumberAttributeDao;
@@ -60,6 +61,7 @@ public class CertificateService {
   private final CertificateRevokedOnAttributeDao revokedOnAttributeDao;
   private final CertificateNotAfterAttributeDao notAfterAttributeDao;
   private final CertificateLastTimeVerifiedOnAttributeDao lastTimeVerifiedOnAttributeDao;
+  private final CertificatePasswordAttributeDao passwordAttributeDao;
   // Tie
   private final CertificateClientTieDao certificateClientTieDao;
 
@@ -69,7 +71,8 @@ public class CertificateService {
       CertificateStatusAttributeDao statusAttributeDao, CertificateIssuedOnAttributeDao issuedOnAttributeDao,
       CertificateRevokedOnAttributeDao revokedOnAttributeDao, CertificateClientTieDao certificateClientTieDao,
       CertificateNotAfterAttributeDao notAfterAttributeDao,
-      CertificateLastTimeVerifiedOnAttributeDao lastTimeVerifiedOnAttributeDao) {
+      CertificateLastTimeVerifiedOnAttributeDao lastTimeVerifiedOnAttributeDao,
+      CertificatePasswordAttributeDao passwordAttributeDao) {
     this.applicationDao = applicationDao;
     this.certificateAnchorDao = certificateAnchorDao;
     this.certificateViewDao = certificateViewDao;
@@ -82,6 +85,7 @@ public class CertificateService {
     this.certificateClientTieDao = certificateClientTieDao;
     this.notAfterAttributeDao = notAfterAttributeDao;
     this.lastTimeVerifiedOnAttributeDao = lastTimeVerifiedOnAttributeDao;
+    this.passwordAttributeDao = passwordAttributeDao;
   }
 
   @Transactional
@@ -114,7 +118,13 @@ public class CertificateService {
         Attribute.METADATA_ACTIVE);
     lastTimeVerifiedOnAttributeDao.insert(certificateId, certificate.getLastTimeVerifiedOn().toInstant(ZoneOffset.UTC),
         Attribute.METADATA_ACTIVE);
-
+    if ((certificate.getPath().toLowerCase().endsWith(".pfx")
+        || certificate.getPath().toLowerCase().endsWith(".p12"))) {
+      if (certificate.getPassword() == null) {
+        throw new IllegalArgumentException("Password is required for PFX/P12 files");
+      }
+      passwordAttributeDao.insert(certificateId, certificate.getPassword(), Attribute.METADATA_ACTIVE);
+    }
     // Tie
     certificateClientTieDao.insert(certificateId, clientId, Attribute.METADATA_ACTIVE);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     type Certificate,
@@ -28,6 +28,8 @@ export function CertificateManagement() {
     const [paging, setPaging] = useState({ page: 0, size: 10, total: 0 });
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [clients, setClients] = useState<Client[]>([]);
+    const [expandedNotifications, setExpandedNotifications] = useState<Record<number, any[]>>({});
+    const [loadingNotifications, setLoadingNotifications] = useState<Record<number, boolean>>({});
 
     // Load client info for the heading
     useEffect(() => {
@@ -103,6 +105,27 @@ export function CertificateManagement() {
     const handleEdit = (cert: Certificate) => {
         setEditingCert(cert);
         setShowForm(true);
+    };
+
+    const toggleNotifications = async (certId: number) => {
+        if (expandedNotifications[certId]) {
+            setExpandedNotifications((prev) => {
+                const next = { ...prev };
+                delete next[certId];
+                return next;
+            });
+            return;
+        }
+
+        try {
+            setLoadingNotifications((prev) => ({ ...prev, [certId]: true }));
+            const notifications = await certificateService.getNotifications(certId);
+            setExpandedNotifications((prev) => ({ ...prev, [certId]: notifications }));
+        } catch (err) {
+            console.error('Failed to load notifications', err);
+        } finally {
+            setLoadingNotifications((prev) => ({ ...prev, [certId]: false }));
+        }
     };
 
     const filtered = certificates.filter((c) => {
@@ -228,6 +251,7 @@ export function CertificateManagement() {
                                         <th>Issued On</th>
                                         <th>Not After</th>
                                         <th>Status</th>
+                                        <th>Notifications</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -239,50 +263,88 @@ export function CertificateManagement() {
                                             const statusClass = isRevoked ? 'cert-deleted' : (isExpired ? 'cert-expired' : 'cert-active');
 
                                             return (
-                                                <tr
-                                                    key={cert.id}
-                                                    className={statusClass}
-                                                >
-                                                    <td>{cert.serialNumber ?? '—'}</td>
-                                                    <td className="mono-text" title={cert.path}>
-                                                        {formatPath(cert.path)}
-                                                    </td>
-                                                    <td>
-                                                        {cert.issuedOn
-                                                            ? new Date(cert.issuedOn).toLocaleDateString()
-                                                            : '—'}
-                                                    </td>
-                                                    <td className={isExpired ? 'expired-text' : ''}>
-                                                        {cert.notAfter
-                                                            ? new Date(cert.notAfter).toLocaleDateString()
-                                                            : '—'}
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            className={`cert-badge ${statusClass}`}
-                                                        >
-                                                            {isRevoked ? 'Deleted' : (isExpired ? 'Expired' : 'Active')}
-                                                        </span>
-                                                    </td>
-                                                    <td className="actions-cell">
-                                                        <button
-                                                            className="btn btn-sm btn-outline"
-                                                            onClick={() => handleEdit(cert)}
-                                                            disabled={loading}
-                                                        >
-                                                            View
-                                                        </button>
-                                                        {!isRevoked && (
+                                                <React.Fragment key={cert.id}>
+                                                    <tr
+                                                        className={statusClass}
+                                                    >
+                                                        <td>{cert.serialNumber ?? '—'}</td>
+                                                        <td className="mono-text" title={cert.path}>
+                                                            {formatPath(cert.path)}
+                                                        </td>
+                                                        <td>
+                                                            {cert.issuedOn
+                                                                ? new Date(cert.issuedOn).toLocaleDateString()
+                                                                : '—'}
+                                                        </td>
+                                                        <td className={isExpired ? 'expired-text' : ''}>
+                                                            {cert.notAfter
+                                                                ? new Date(cert.notAfter).toLocaleDateString()
+                                                                : '—'}
+                                                        </td>
+                                                        <td>
+                                                            <span
+                                                                className={`cert-badge ${statusClass}`}
+                                                            >
+                                                                {isRevoked ? 'Deleted' : (isExpired ? 'Expired' : 'Active')}
+                                                            </span>
+                                                        </td>
+                                                        <td>
                                                             <button
-                                                                className="btn btn-sm btn-danger"
-                                                                onClick={() => handleDelete(cert.id!)}
+                                                                className="btn btn-sm btn-link"
+                                                                onClick={() => toggleNotifications(cert.id!)}
+                                                            >
+                                                                {loadingNotifications[cert.id!] ? '...' : (expandedNotifications[cert.id!] ? 'Hide' : 'View History')}
+                                                            </button>
+                                                        </td>
+                                                        <td className="actions-cell">
+                                                            <button
+                                                                className="btn btn-sm btn-outline"
+                                                                onClick={() => handleEdit(cert)}
                                                                 disabled={loading}
                                                             >
-                                                                Delete
+                                                                View
                                                             </button>
-                                                        )}
-                                                    </td>
-                                                </tr>
+                                                            {!isRevoked && (
+                                                                <button
+                                                                    className="btn btn-sm btn-danger"
+                                                                    onClick={() => handleDelete(cert.id!)}
+                                                                    disabled={loading}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                    {expandedNotifications[cert.id!] && (
+                                                        <tr className="notifications-row">
+                                                            <td colSpan={7}>
+                                                                <div className="notifications-history">
+                                                                    <h4>Notification History</h4>
+                                                                    {expandedNotifications[cert.id!].length > 0 ? (
+                                                                        <table className="mini-table">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th>Sent At</th>
+                                                                                    <th>Type</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {expandedNotifications[cert.id!].map((n: any) => (
+                                                                                    <tr key={n.id}>
+                                                                                        <td>{new Date(n.sentAt).toLocaleString()}</td>
+                                                                                        <td>{n.remainderCount === 0 ? 'Standard Expiry Reminder' : `Reminder #${n.remainderCount}`}</td>
+                                                                                    </tr>
+                                                                                ))}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    ) : (
+                                                                        <p className="no-notifications">No notifications sent yet.</p>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </React.Fragment>
                                             );
                                         })
                                     ) : (

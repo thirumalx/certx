@@ -19,4 +19,18 @@ public interface TieColumns {
         String ANCHOR2 = "cl_id_owns";
         String METADATA = "metadata_ce_belongsto_cl_owns";
     }
+
+    interface CertificateNotifies {
+        String TABLE = "certx.ce_isnotifiedby_nt_notifies";
+        String ANCHOR1 = "ce_id_isnotifiedby";
+        String ANCHOR2 = "nt_id_notifies";
+        String METADATA = "metadata_ce_isnotifiedby_nt_notifies";
+    }
+
+    interface NotificationReceivedBy {
+        String TABLE = "certx.nt_sentto_cl_receives";
+        String ANCHOR1 = "nt_id_sentto";
+        String ANCHOR2 = "cl_id_receives";
+        String METADATA = "metadata_nt_sentto_cl_receives";
+    }
 }

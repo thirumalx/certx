@@ -32,11 +32,11 @@ export function CertificateForm({
             issuedOn: new Date().toISOString().split('T')[0],
             notAfter: '',
             lastTimeVerifiedOn: '',
+            password: '',
         }
     );
 
-    const [password, setPassword] = useState('');
-    const [isPfx, setIsPfx] = useState(false);
+    const [isPfx, setIsPfx] = useState(formData.path.toLowerCase().endsWith('.pfx') || formData.path.toLowerCase().endsWith('.p12'));
 
     const [isValidating, setIsValidating] = useState(false);
     const [validationStatus, setValidationStatus] = useState<'success' | 'error' | null>(null);
@@ -78,7 +78,7 @@ export function CertificateForm({
                 applicationId,
                 clientId,
                 formData.path,
-                password
+                formData.password
             );
 
             if (certDetails.serialNumber === 'PASSWORD_PROTECTED_PFX') {
@@ -188,12 +188,11 @@ export function CertificateForm({
                                 <input
                                     type="password"
                                     id="pfx-password"
-                                    value={password}
-                                    onChange={(e) => {
-                                        setPassword(e.target.value);
-                                        if (errors.password) setErrors((prev) => ({ ...prev, password: '' }));
-                                    }}
+                                    name="password"
+                                    value={formData.password || ''}
+                                    onChange={handleChange}
                                     placeholder="Enter password if required"
+                                    disabled={loading || readOnly}
                                 />
                                 {errors.password && <span className="error-message">{errors.password}</span>}
                             </div>

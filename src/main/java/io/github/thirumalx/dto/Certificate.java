@@ -29,6 +29,7 @@ public class Certificate {
     private LocalDateTime lastTimeVerifiedOn;
     @NotNull
     private String status;
+    private String password;
 
     public boolean isRevoked() {
         return revokedOn != null;

@@ -109,4 +109,25 @@ public interface AttributeColumns {
         String CHANGED_AT = "ce_sta_changedat";
         String METADATA = "metadata_ce_sta";
     }
+
+    interface CertificatePassword {
+        String TABLE = "certx.ce_pas_certificate_password";
+        String FK = "ce_pas_ce_id";
+        String VALUE = "ce_pas_certificate_password";
+        String METADATA = "metadata_ce_pas";
+    }
+
+    interface NotificationSentAt {
+        String TABLE = "certx.nt_snt_notification_sentat";
+        String FK = "nt_snt_nt_id";
+        String VALUE = "nt_snt_notification_sentat";
+        String METADATA = "metadata_nt_snt";
+    }
+
+    interface NotificationRemainderCount {
+        String TABLE = "certx.nt_rec_notification_remaindercount";
+        String FK = "nt_rec_nt_id";
+        String VALUE = "nt_rec_notification_remaindercount";
+        String METADATA = "metadata_nt_rec";
+    }
 }
