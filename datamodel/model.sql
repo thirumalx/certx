@@ -325,7 +325,7 @@ CREATE TABLE IF NOT EXISTS certx.CE_RON_Certificate_RevokedOn (
 -----------------------------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS certx.CE_SNO_Certificate_SerialNumber (
     CE_SNO_CE_ID bigint not null,
-    CE_SNO_Certificate_SerialNumber varchar(25) not null,
+    CE_SNO_Certificate_SerialNumber varchar(150) not null,
     Metadata_CE_SNO bigint not null,
     constraint fkCE_SNO_Certificate_SerialNumber foreign key (
         CE_SNO_CE_ID
@@ -2304,7 +2304,7 @@ RETURNS TABLE
       , CE_RON_Certificate_RevokedOn timestamp with time zone
       , CE_SNO_CE_ID bigint
       , Metadata_CE_SNO bigint
-      , CE_SNO_Certificate_SerialNumber varchar(25)
+      , CE_SNO_Certificate_SerialNumber varchar(150)
       , CE_LTV_CE_ID bigint
       , Metadata_CE_LTV bigint
       , CE_LTV_Certificate_LastTimeVerifiedOn timestamp with time zone
@@ -2415,7 +2415,7 @@ RETURNS TABLE
       , CE_RON_Certificate_RevokedOn timestamp with time zone
       , CE_SNO_CE_ID bigint
       , Metadata_CE_SNO bigint
-      , CE_SNO_Certificate_SerialNumber varchar(25)
+      , CE_SNO_Certificate_SerialNumber varchar(150)
       , CE_LTV_CE_ID bigint
       , Metadata_CE_LTV bigint
       , CE_LTV_Certificate_LastTimeVerifiedOn timestamp with time zone
@@ -2542,8 +2542,8 @@ SELECT current_timestamp
      , '{
    "schema": {
       "format": "0.99.16",
-      "date": "2026-03-08",
-      "time": "20:42:15",
+      "date": "2026-03-09",
+      "time": "13:45:10",
       "metadata": {
          "changingRange": "timestamp",
          "encapsulation": "certx",
@@ -2962,7 +2962,7 @@ SELECT current_timestamp
                   "id": "SNO",
                   "mnemonic": "SNO",
                   "descriptor": "SerialNumber",
-                  "dataRange": "varchar(25)",
+                  "dataRange": "varchar(150)",
                   "metadata": {
                      "privacy": "Ignore",
                      "capsule": "certx",
