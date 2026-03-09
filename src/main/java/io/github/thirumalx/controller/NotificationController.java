@@ -33,4 +33,10 @@ public class NotificationController {
         return notificationService.getNotificationsByCertificate(certificateId);
     }
 
+    @org.springframework.web.bind.annotation.PostMapping("/notify/client/{clientId}/certificate/{certificateId}")
+    public Long notifyClient(@PathVariable Long clientId, @PathVariable Long certificateId) {
+        logger.info("Manually triggering notification for client {} and certificate {}", clientId, certificateId);
+        return notificationService.createNotification(certificateId, clientId, 0);
+    }
+
 }

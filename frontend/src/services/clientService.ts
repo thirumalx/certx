@@ -91,4 +91,15 @@ export const clientService = {
         if (!response.ok) throw new Error('Failed to delete client');
         return response.json();
     },
+
+    /**
+     * Notify client about a certificate
+     */
+    notifyClient: async (clientId: number, certificateId: number): Promise<number> => {
+        const response = await fetch(`${API_BASE}/notifications/notify/client/${clientId}/certificate/${certificateId}`, {
+            method: 'POST',
+        });
+        if (!response.ok) throw new Error('Failed to send notification');
+        return response.json();
+    },
 };

@@ -45,4 +45,11 @@ public class Certificate {
         return !isRevoked() && notAfter != null && LocalDateTime.now().isBefore(notAfter);
     }
 
+    public String getFileName() {
+        if (path != null && !path.isEmpty()) {
+            return path.substring(path.lastIndexOf("\\") + 1);
+        }
+        return null;
+    }
+
 }

@@ -107,6 +107,19 @@ export function CertificateManagement() {
         setShowForm(true);
     };
 
+    const handleNotify = async (certId: number) => {
+        try {
+            setLoading(true);
+            await clientService.notifyClient(cId, certId);
+            alert('Notification sent successfully');
+            loadCertificates(paging.page, activeFilter);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to send notification');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const toggleNotifications = async (certId: number) => {
         if (expandedNotifications[certId]) {
             setExpandedNotifications((prev) => {
@@ -305,13 +318,23 @@ export function CertificateManagement() {
                                                                 View
                                                             </button>
                                                             {!isRevoked && (
-                                                                <button
-                                                                    className="btn btn-sm btn-danger"
-                                                                    onClick={() => handleDelete(cert.id!)}
-                                                                    disabled={loading}
-                                                                >
-                                                                    Delete
-                                                                </button>
+                                                                <>
+                                                                    <button
+                                                                        className="btn btn-sm btn-info"
+                                                                        onClick={() => handleNotify(cert.id!)}
+                                                                        disabled={loading}
+                                                                        title="Send email notification"
+                                                                    >
+                                                                        Notify
+                                                                    </button>
+                                                                    <button
+                                                                        className="btn btn-sm btn-danger"
+                                                                        onClick={() => handleDelete(cert.id!)}
+                                                                        disabled={loading}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </>
                                                             )}
                                                         </td>
                                                     </tr>

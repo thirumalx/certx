@@ -15,8 +15,14 @@ import io.github.thirumalx.dao.attribute.NotificationRemainderCountAttributeDao;
 import io.github.thirumalx.dao.attribute.NotificationSentAtAttributeDao;
 import io.github.thirumalx.dao.tie.CertificateNotificationTieDao;
 import io.github.thirumalx.dao.tie.NotificationClientTieDao;
+import io.github.thirumalx.dao.view.CertificateViewDao;
+import io.github.thirumalx.dao.view.ClientViewDao;
+import io.github.thirumalx.dto.Certificate;
+import io.github.thirumalx.dto.Client;
 import io.github.thirumalx.dto.Notification;
 import io.github.thirumalx.model.Attribute;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Thirumal M
@@ -24,65 +30,94 @@ import io.github.thirumalx.model.Attribute;
 @Service
 public class NotificationService {
 
-    private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
+        private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
 
-    private final NotificationAnchorDao notificationAnchorDao;
-    private final NotificationSentAtAttributeDao sentAtAttributeDao;
-    private final NotificationRemainderCountAttributeDao remainderCountAttributeDao;
-    private final CertificateNotificationTieDao certificateNotificationTieDao;
-    private final NotificationClientTieDao notificationClientTieDao;
-    private final JdbcClient jdbc;
+        private final NotificationAnchorDao notificationAnchorDao;
+        private final NotificationSentAtAttributeDao sentAtAttributeDao;
+        private final NotificationRemainderCountAttributeDao remainderCountAttributeDao;
+        private final CertificateNotificationTieDao certificateNotificationTieDao;
+        private final NotificationClientTieDao notificationClientTieDao;
+        private final MailService mailService;
+        private final CertificateViewDao certificateViewDao;
+        private final ClientViewDao clientViewDao;
+        private final JdbcClient jdbc;
 
-    public NotificationService(NotificationAnchorDao notificationAnchorDao,
-            NotificationSentAtAttributeDao sentAtAttributeDao,
-            NotificationRemainderCountAttributeDao remainderCountAttributeDao,
-            CertificateNotificationTieDao certificateNotificationTieDao,
-            NotificationClientTieDao notificationClientTieDao,
-            JdbcClient jdbc) {
-        this.notificationAnchorDao = notificationAnchorDao;
-        this.sentAtAttributeDao = sentAtAttributeDao;
-        this.remainderCountAttributeDao = remainderCountAttributeDao;
-        this.certificateNotificationTieDao = certificateNotificationTieDao;
-        this.notificationClientTieDao = notificationClientTieDao;
-        this.jdbc = jdbc;
-    }
+        public NotificationService(NotificationAnchorDao notificationAnchorDao,
+                        NotificationSentAtAttributeDao sentAtAttributeDao,
+                        NotificationRemainderCountAttributeDao remainderCountAttributeDao,
+                        CertificateNotificationTieDao certificateNotificationTieDao,
+                        NotificationClientTieDao notificationClientTieDao,
+                        MailService mailService,
+                        CertificateViewDao certificateViewDao,
+                        ClientViewDao clientViewDao,
+                        JdbcClient jdbc) {
+                this.notificationAnchorDao = notificationAnchorDao;
+                this.sentAtAttributeDao = sentAtAttributeDao;
+                this.remainderCountAttributeDao = remainderCountAttributeDao;
+                this.certificateNotificationTieDao = certificateNotificationTieDao;
+                this.notificationClientTieDao = notificationClientTieDao;
+                this.mailService = mailService;
+                this.certificateViewDao = certificateViewDao;
+                this.clientViewDao = clientViewDao;
+                this.jdbc = jdbc;
+        }
 
-    @Transactional
-    public Long createNotification(Long certificateId, Long clientId, int remainderCount) {
-        logger.info("Creating notification for certificate {} and client {}", certificateId, clientId);
+        @Transactional
+        public Long createNotification(Long certificateId, Long clientId, int remainderCount) {
+                logger.info("Creating notification for certificate {} and client {}", certificateId, clientId);
 
-        Long notificationId = notificationAnchorDao.insert(Attribute.METADATA_ACTIVE);
+                Long notificationId = notificationAnchorDao.insert(Attribute.METADATA_ACTIVE);
 
-        sentAtAttributeDao.insert(notificationId, LocalDateTime.now().toInstant(ZoneOffset.UTC),
-                Attribute.METADATA_ACTIVE);
-        remainderCountAttributeDao.insert(notificationId, remainderCount, Attribute.METADATA_ACTIVE);
+                sentAtAttributeDao.insert(notificationId, LocalDateTime.now().toInstant(ZoneOffset.UTC),
+                                Attribute.METADATA_ACTIVE);
+                remainderCountAttributeDao.insert(notificationId, remainderCount, Attribute.METADATA_ACTIVE);
 
-        certificateNotificationTieDao.insert(certificateId, notificationId, Attribute.METADATA_ACTIVE);
-        notificationClientTieDao.insert(notificationId, clientId, Attribute.METADATA_ACTIVE);
+                certificateNotificationTieDao.insert(certificateId, notificationId, Attribute.METADATA_ACTIVE);
+                notificationClientTieDao.insert(notificationId, clientId, Attribute.METADATA_ACTIVE);
 
-        return notificationId;
-    }
+                // Fetch details for email
+                Certificate certificate = certificateViewDao.findNowById(certificateId).orElse(null);
+                Client client = clientViewDao.findNowById(clientId).orElse(null);
 
-    public List<Notification> getNotificationsByCertificate(Long certificateId) {
-        return jdbc
-                .sql("""
-                        SELECT nt.nt_id, snt.nt_snt_notification_sentat, rec.nt_rec_notification_remaindercount, ties.ce_id_isnotifiedby, tcl.cl_id_receives
-                        FROM certx.nt_notification nt
-                        JOIN certx.ce_isnotifiedby_nt_notifies ties ON ties.nt_id_notifies = nt.nt_id
-                        JOIN certx.nt_sentto_cl_receives tcl ON tcl.nt_id_sentto = nt.nt_id
-                        LEFT JOIN certx.nt_snt_notification_sentat snt ON snt.nt_snt_nt_id = nt.nt_id
-                        LEFT JOIN certx.nt_rec_notification_remaindercount rec ON rec.nt_rec_nt_id = nt.nt_id
-                        WHERE ties.ce_id_isnotifiedby = :certificateId
-                        ORDER BY snt.nt_snt_notification_sentat DESC
-                        """)
-                .param("certificateId", certificateId)
-                .query((rs, rowNum) -> Notification.builder()
-                        .id(rs.getLong("nt_id"))
-                        .sentAt(rs.getTimestamp("nt_snt_notification_sentat").toLocalDateTime())
-                        .remainderCount(rs.getInt("nt_rec_notification_remaindercount"))
-                        .certificateId(rs.getLong("ce_id_isnotifiedby"))
-                        .clientId(rs.getLong("cl_id_receives"))
-                        .build())
-                .list();
-    }
+                if (certificate != null && client != null && client.getEmail() != null) {
+                        Map<String, Object> model = new HashMap<>();
+                        model.put("clientName", client.getName());
+                        model.put("serialNumber", certificate.getSerialNumber());
+                        model.put("expiryDate", certificate.getNotAfter().toString());
+                        model.put("path", certificate.getFileName());
+
+                        try {
+                                mailService.sendEmail(client.getEmail(),
+                                                "Certificate Expiry Reminder - " + certificate.getSerialNumber(),
+                                                "expiry-notification.ftl", model);
+                        } catch (Exception e) {
+                                logger.error("Failed to send email during notification creation: {}", e.getMessage());
+                        }
+                }
+
+                return notificationId;
+        }
+
+        public List<Notification> getNotificationsByCertificate(Long certificateId) {
+                return jdbc
+                                .sql("""
+                                                SELECT nt.nt_id, snt.nt_snt_notification_sentat, rec.nt_rec_notification_remaindercount, ties.ce_id_isnotifiedby, tcl.cl_id_receives
+                                                FROM certx.nt_notification nt
+                                                JOIN certx.ce_isnotifiedby_nt_notifies ties ON ties.nt_id_notifies = nt.nt_id
+                                                JOIN certx.nt_sentto_cl_receives tcl ON tcl.nt_id_sentto = nt.nt_id
+                                                LEFT JOIN certx.nt_snt_notification_sentat snt ON snt.nt_snt_nt_id = nt.nt_id
+                                                LEFT JOIN certx.nt_rec_notification_remaindercount rec ON rec.nt_rec_nt_id = nt.nt_id
+                                                WHERE ties.ce_id_isnotifiedby = :certificateId
+                                                ORDER BY snt.nt_snt_notification_sentat DESC
+                                                """)
+                                .param("certificateId", certificateId)
+                                .query((rs, rowNum) -> Notification.builder()
+                                                .id(rs.getLong("nt_id"))
+                                                .sentAt(rs.getTimestamp("nt_snt_notification_sentat").toLocalDateTime())
+                                                .remainderCount(rs.getInt("nt_rec_notification_remaindercount"))
+                                                .certificateId(rs.getLong("ce_id_isnotifiedby"))
+                                                .clientId(rs.getLong("cl_id_receives"))
+                                                .build())
+                                .list();
+        }
 }
