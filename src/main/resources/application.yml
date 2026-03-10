@@ -26,6 +26,8 @@ management:
   endpoint:
     restart:
       enabled: true
+    health:
+      show-details: always
 
 logging:
   file:

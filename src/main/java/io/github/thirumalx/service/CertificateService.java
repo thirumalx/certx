@@ -144,6 +144,15 @@ public class CertificateService {
     return true;
   }
 
+  @Transactional
+  public boolean markAsRevoked(Long id, Instant revokedAt) {
+    logger.info("Marking certificate {} as REVOKED at {}", id, revokedAt);
+    statusAttributeDao.insert(id, Knot.REVOKED, Instant.now(), Attribute.METADATA_ACTIVE);
+    revokedOnAttributeDao.insert(id, revokedAt, Attribute.METADATA_ACTIVE);
+    lastTimeVerifiedOnAttributeDao.insert(id, Instant.now(), Attribute.METADATA_ACTIVE);
+    return true;
+  }
+
   public Certificate validateCertificate(String path, String password) {
     if (path == null || path.isEmpty()) {
       throw new IllegalArgumentException("Path cannot be empty");

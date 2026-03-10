@@ -9,6 +9,7 @@ public sealed interface Knot<T> permits SimpleKnot, HistorizedKnot {
 
     public static final Long DELETED = 0L;
     public static final Long ACTIVE = 1L;
+    public static final Long REVOKED = 2L;
 
     Long getId();
 
