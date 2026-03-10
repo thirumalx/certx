@@ -51,6 +51,10 @@ public class CRLService {
     public boolean isRevoked(X509Certificate cert) {
         logger.debug("Checking revocation for certificate: {}", cert.getSerialNumber());
         List<String> crlUrls = getCRLDistributionPoints(cert);
+        if (crlUrls == null || crlUrls.isEmpty()) {
+            logger.warn("No CRL distribution points found for certificate: {}", cert.getSerialNumber());
+            return false;
+        }
         for (String url : crlUrls) {
             try {
                 if (checkCRL(cert, url)) {

@@ -52,4 +52,11 @@ public class Certificate {
         return null;
     }
 
+    /**
+     * Checks if the certificate file is a PFX/P12 file based on its extension
+     */
+    public boolean ispfxCertificate() {
+        String fileName = getFileName();
+        return fileName != null && (fileName.toLowerCase().endsWith(".pfx") || fileName.toLowerCase().endsWith(".p12"));
+    }
 }
