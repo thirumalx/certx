@@ -130,4 +130,36 @@ public interface AttributeColumns {
         String VALUE = "nt_rec_notification_remaindercount";
         String METADATA = "metadata_nt_rec";
     }
+
+    interface UserId {
+        String TABLE = "certx.us_uid_user_userid";
+        String FK = "us_uid_us_id";
+        String VALUE = "us_uid_user_userid";
+        String CHANGED_AT = "us_uid_changedat";
+        String METADATA = "metadata_us_uid";
+    }
+
+    interface UserName {
+        String TABLE = "certx.us_nam_user_name";
+        String FK = "us_nam_us_id";
+        String VALUE = "us_nam_user_name";
+        String CHANGED_AT = "us_nam_changedat";
+        String METADATA = "metadata_us_nam";
+    }
+
+    interface UserMobileNumber {
+        String TABLE = "certx.us_mno_user_mobilenumber";
+        String FK = "us_mno_us_id";
+        String VALUE = "us_mno_user_mobilenumber";
+        String CHANGED_AT = "us_mno_changedat";
+        String METADATA = "metadata_us_mno";
+    }
+
+    interface UserEmail {
+        String TABLE = "certx.us_eid_user_emailid";
+        String FK = "us_eid_us_id";
+        String VALUE = "us_eid_user_emailid";
+        String CHANGED_AT = "us_eid_changedat";
+        String METADATA = "metadata_us_eid";
+    }
 }

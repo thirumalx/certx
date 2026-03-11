@@ -20,6 +20,7 @@ public class Client {
     private String email;
     private String mobileNumber;
     private String status;
+    private Integer assignedUserCount;
 
     @Override
     public boolean equals(Object obj) {

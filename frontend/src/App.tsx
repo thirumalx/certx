@@ -5,6 +5,7 @@ import { Home } from './pages/Home'
 import { ApplicationManagement } from './components/ApplicationManagement'
 import { ClientManagement } from './components/ClientManagement'
 import { CertificateManagement } from './components/CertificateManagement'
+import { ClientAssignees } from './components/ClientAssignees'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/applications" element={<ApplicationManagement />} />
         <Route path="/applications/:applicationId/clients" element={<ClientManagement />} />
         <Route path="/applications/:applicationId/clients/:clientId/certificates" element={<CertificateManagement />} />
+        <Route path="/applications/:applicationId/clients/:clientId/assignees" element={<ClientAssignees />} />
       </Routes>
     </Router>
   )

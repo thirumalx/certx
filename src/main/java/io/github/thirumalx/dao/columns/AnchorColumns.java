@@ -28,4 +28,10 @@ public interface AnchorColumns {
         String ID = "nt_id";
         String METADATA = "metadata_nt";
     }
+
+    interface User {
+        String TABLE = "certx.us_user";
+        String ID = "us_id";
+        String METADATA = "metadata_us";
+    }
 }

@@ -13,6 +13,15 @@ export interface Client {
     email?: string;
     mobileNumber?: string;
     status: string;
+    assignedUserCount?: number;
+}
+
+export interface AssignedUser {
+    id: number;
+    userId?: string;
+    name?: string;
+    email?: string;
+    mobileNumber?: string;
 }
 
 const baseUrl = (applicationId: number) =>
@@ -89,6 +98,55 @@ export const clientService = {
             method: 'DELETE',
         });
         if (!response.ok) throw new Error('Failed to delete client');
+        return response.json();
+    },
+
+    listAssignees: async (applicationId: number, clientId: number): Promise<AssignedUser[]> => {
+        const response = await fetch(`${baseUrl(applicationId)}/${clientId}/assignees`);
+        if (!response.ok) throw new Error('Failed to fetch assignees');
+        return response.json();
+    },
+
+    assignUser: async (
+        applicationId: number,
+        clientId: number,
+        payload: { email: string; name?: string; mobileNumber?: string; userId?: string }
+    ): Promise<AssignedUser> => {
+        const response = await fetch(`${baseUrl(applicationId)}/${clientId}/assignees`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Failed to assign user');
+        }
+        return response.json();
+    },
+
+    updateAssignee: async (
+        applicationId: number,
+        clientId: number,
+        userId: number,
+        payload: { email: string; name?: string; mobileNumber?: string; userId?: string }
+    ): Promise<AssignedUser> => {
+        const response = await fetch(`${baseUrl(applicationId)}/${clientId}/assignees/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Failed to update assignee');
+        }
+        return response.json();
+    },
+
+    removeAssignee: async (applicationId: number, clientId: number, userId: number): Promise<boolean> => {
+        const response = await fetch(`${baseUrl(applicationId)}/${clientId}/assignees/${userId}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error('Failed to remove assignee');
         return response.json();
     },
 

@@ -59,4 +59,13 @@ public interface ViewColumns {
         String STATUS = "CE_STA_STA_Status";
         String PASSWORD = "CE_PAS_Certificate_Password";
     }
+
+    interface UserNow {
+        String TABLE = "certx.nUS_User";
+        String ID = "US_ID";
+        String USER_ID = "US_UID_User_UserId";
+        String NAME = "US_NAM_User_Name";
+        String EMAIL = "US_EID_User_EmailId";
+        String MOBILE_NUMBER = "US_MNO_User_MobileNumber";
+    }
 }

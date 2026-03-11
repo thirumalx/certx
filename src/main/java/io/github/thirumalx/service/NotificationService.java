@@ -3,6 +3,8 @@ package io.github.thirumalx.service;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +19,11 @@ import io.github.thirumalx.dao.tie.CertificateNotificationTieDao;
 import io.github.thirumalx.dao.tie.NotificationClientTieDao;
 import io.github.thirumalx.dao.view.CertificateViewDao;
 import io.github.thirumalx.dao.view.ClientViewDao;
+import io.github.thirumalx.dao.view.UserViewDao;
 import io.github.thirumalx.dto.Certificate;
 import io.github.thirumalx.dto.Client;
 import io.github.thirumalx.dto.Notification;
+import io.github.thirumalx.dto.User;
 import io.github.thirumalx.model.Attribute;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,6 +44,7 @@ public class NotificationService {
         private final MailService mailService;
         private final CertificateViewDao certificateViewDao;
         private final ClientViewDao clientViewDao;
+        private final UserViewDao userViewDao;
         private final JdbcClient jdbc;
 
         public NotificationService(NotificationAnchorDao notificationAnchorDao,
@@ -50,6 +55,7 @@ public class NotificationService {
                         MailService mailService,
                         CertificateViewDao certificateViewDao,
                         ClientViewDao clientViewDao,
+                        UserViewDao userViewDao,
                         JdbcClient jdbc) {
                 this.notificationAnchorDao = notificationAnchorDao;
                 this.sentAtAttributeDao = sentAtAttributeDao;
@@ -59,6 +65,7 @@ public class NotificationService {
                 this.mailService = mailService;
                 this.certificateViewDao = certificateViewDao;
                 this.clientViewDao = clientViewDao;
+                this.userViewDao = userViewDao;
                 this.jdbc = jdbc;
         }
 
@@ -92,6 +99,41 @@ public class NotificationService {
                                                 "expiry-notification.ftl", model);
                         } catch (Exception e) {
                                 logger.error("Failed to send email during notification creation: {}", e.getMessage());
+                        }
+                }
+
+                if (client != null) {
+                        List<User> assignedUsers = userViewDao.listAssignedToClient(client.getId());
+                        Set<String> notifiedEmails = new LinkedHashSet<>();
+                        for (User assignedUser : assignedUsers) {
+                                if (assignedUser.getEmail() == null) {
+                                        continue;
+                                }
+                                if (client.getEmail() != null
+                                                && assignedUser.getEmail().equalsIgnoreCase(client.getEmail())) {
+                                        continue;
+                                }
+                                if (!notifiedEmails.add(assignedUser.getEmail().toLowerCase())) {
+                                        continue;
+                                }
+                                Map<String, Object> model = new HashMap<>();
+                                model.put("recipientName", assignedUser.getName());
+                                model.put("clientName", client.getName());
+                                model.put("serialNumber", certificate != null ? certificate.getSerialNumber() : "");
+                                model.put("expiryDate", certificate != null ? certificate.getNotAfter().toString() : "");
+                                model.put("path", certificate != null ? certificate.getFileName() : "");
+
+                                try {
+                                        mailService.sendEmail(assignedUser.getEmail(),
+                                                        "Certificate Expiry Reminder - " +
+                                                                        (certificate != null
+                                                                                        ? certificate.getSerialNumber()
+                                                                                        : ""),
+                                                        "expiry-notification-assigned.ftl",
+                                                        model);
+                                } catch (Exception e) {
+                                        logger.error("Failed to send assigned user notification: {}", e.getMessage());
+                                }
                         }
                 }
 

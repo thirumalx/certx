@@ -33,4 +33,12 @@ public interface TieColumns {
         String ANCHOR2 = "cl_id_receives";
         String METADATA = "metadata_nt_sentto_cl_receives";
     }
+
+    interface UserClientAssignedTo {
+        String TABLE = "certx.us_worksfor_cl_assignedto";
+        String ANCHOR1 = "us_id_worksfor";
+        String ANCHOR2 = "cl_id_assignedto";
+        String CHANGED_AT = "us_worksfor_cl_assignedto_changedat";
+        String METADATA = "metadata_us_worksfor_cl_assignedto";
+    }
 }

@@ -207,6 +207,7 @@ export function ClientManagement() {
                                             <th>Name</th>
                                             <th>Email</th>
                                             <th>Mobile</th>
+                                            <th>Assigned Users</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -229,6 +230,7 @@ export function ClientManagement() {
                                                     </td>
                                                     <td>{client.email ?? '—'}</td>
                                                     <td>{client.mobileNumber ?? '—'}</td>
+                                                    <td>{client.assignedUserCount ?? 0}</td>
                                                     <td>
                                                         <span className={`status-badge status-${client.status.toLowerCase()}`}>
                                                             {client.status}
@@ -253,6 +255,16 @@ export function ClientManagement() {
                                                             Certificates →
                                                         </button>
                                                         <button
+                                                            className="btn btn-sm btn-outline"
+                                                            onClick={() =>
+                                                                navigate(
+                                                                    `/applications/${appId}/clients/${client.id}/assignees`
+                                                                )
+                                                            }
+                                                        >
+                                                            Assignees
+                                                        </button>
+                                                        <button
                                                             className="btn btn-sm btn-danger"
                                                             onClick={() => handleDelete(client.id!)}
                                                             disabled={loading}
@@ -264,7 +276,7 @@ export function ClientManagement() {
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={6} className="no-data">
+                                                <td colSpan={7} className="no-data">
                                                     {searchTerm
                                                         ? 'No clients found matching your search'
                                                         : 'No clients yet — click "+ New Client" to add one'}

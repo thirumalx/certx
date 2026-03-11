@@ -1,6 +1,7 @@
 package io.github.thirumalx.controller;
 
 import java.net.URI;
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,6 +17,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import io.github.thirumalx.dto.Client;
 import io.github.thirumalx.dto.PageRequest;
 import io.github.thirumalx.dto.PageResponse;
+import io.github.thirumalx.dto.User;
+import io.github.thirumalx.dto.UserAssignmentRequest;
+import io.github.thirumalx.exception.ResourceNotFoundException;
 import io.github.thirumalx.service.ClientService;
 import jakarta.validation.Valid;
 
@@ -65,5 +69,40 @@ public class ClientController {
     @DeleteMapping("/{id}")
     public boolean deleteClient(@PathVariable Long applicationId, @PathVariable Long id) {
         return clientService.deleteClient(applicationId, id);
+    }
+
+    @GetMapping("/{id}/assignees")
+    public ResponseEntity<List<User>> listAssignees(@PathVariable Long applicationId, @PathVariable Long id) {
+        if (clientService.getClient(applicationId, id) == null) {
+            throw new ResourceNotFoundException("Client not found");
+        }
+        return ResponseEntity.ok(clientService.listAssignedUsers(id));
+    }
+
+    @PostMapping("/{id}/assignees")
+    public ResponseEntity<User> assignUser(@PathVariable Long applicationId, @PathVariable Long id,
+            @Valid @RequestBody UserAssignmentRequest request) {
+        if (clientService.getClient(applicationId, id) == null) {
+            throw new ResourceNotFoundException("Client not found");
+        }
+        return ResponseEntity.ok(clientService.assignUser(id, request));
+    }
+
+    @PutMapping("/{id}/assignees/{userId}")
+    public ResponseEntity<User> updateAssignee(@PathVariable Long applicationId, @PathVariable Long id,
+            @PathVariable Long userId, @Valid @RequestBody UserAssignmentRequest request) {
+        if (clientService.getClient(applicationId, id) == null) {
+            throw new ResourceNotFoundException("Client not found");
+        }
+        return ResponseEntity.ok(clientService.updateAssignedUser(id, userId, request));
+    }
+
+    @DeleteMapping("/{id}/assignees/{userId}")
+    public boolean deleteAssignee(@PathVariable Long applicationId, @PathVariable Long id,
+            @PathVariable Long userId) {
+        if (clientService.getClient(applicationId, id) == null) {
+            throw new ResourceNotFoundException("Client not found");
+        }
+        return clientService.removeAssignedUser(id, userId);
     }
 }
