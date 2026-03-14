@@ -28,6 +28,7 @@ public interface ViewColumns {
         String NAME = "CL_NAM_Client_Name";
         String EMAIL = "CL_EID_Client_Email";
         String MOBILE_NUMBER = "CL_MNO_Client_MobileNumber";
+        String UNIQUE_ID = "CL_UID_Client_UniqueId";
         String STATUS_ID_COL = "cl_sta_sta_id";
         String STATUS = "CL_STA_STA_Status";
     }

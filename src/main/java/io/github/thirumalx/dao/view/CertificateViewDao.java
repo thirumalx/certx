@@ -61,6 +61,36 @@ public class CertificateViewDao extends ViewDao<Certificate> {
     }
 
     /**
+     * List certificates for a given application and client (by status) from the
+     * now view, with pagination.
+     */
+    public List<Certificate> listNowByApplicationAndClient(Long applicationId, Long clientId, String filter, int page,
+            int size) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT DISTINCT nce.* FROM " + ViewColumns.CertificateNow.TABLE + " nce"
+                        + " WHERE EXISTS ("
+                        + " SELECT 1 FROM certx.ce_belongsto_cl_owns tie"
+                        + " WHERE tie.ce_id_belongsto = nce." + ViewColumns.CertificateNow.ID
+                        + " AND tie.cl_id_owns = :clientId)"
+                        + " AND EXISTS ("
+                        + " SELECT 1 FROM certx.ap_uses_ce_isusedby apce"
+                        + " WHERE apce.ce_id_isusedby = nce." + ViewColumns.CertificateNow.ID
+                        + " AND apce.ap_id_uses = :applicationId)");
+
+        applyFilter(sql, filter);
+
+        sql.append(" ORDER BY nce.").append(ViewColumns.CertificateNow.ID).append(" LIMIT :limit OFFSET :offset");
+
+        return jdbc.sql(sql.toString())
+                .param("clientId", clientId)
+                .param("applicationId", applicationId)
+                .param("limit", size)
+                .param("offset", page * size)
+                .query(rowMapper())
+                .list();
+    }
+
+    /**
      * Count certificates belonging to a given client from the now view.
      */
     public long countNowByClient(Long clientId, String filter) {
@@ -74,6 +104,32 @@ public class CertificateViewDao extends ViewDao<Certificate> {
 
         return jdbc.sql(sql.toString())
                 .param("clientId", clientId)
+                .query(Long.class)
+                .single();
+    }
+
+    /**
+     * Count certificates belonging to a given application and client from the now
+     * view.
+     */
+    public long countNowByApplicationAndClient(Long applicationId, Long clientId, String filter) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT count(DISTINCT nce." + ViewColumns.CertificateNow.ID + ") FROM "
+                        + ViewColumns.CertificateNow.TABLE + " nce"
+                        + " WHERE EXISTS ("
+                        + " SELECT 1 FROM certx.ce_belongsto_cl_owns tie"
+                        + " WHERE tie.ce_id_belongsto = nce." + ViewColumns.CertificateNow.ID
+                        + " AND tie.cl_id_owns = :clientId)"
+                        + " AND EXISTS ("
+                        + " SELECT 1 FROM certx.ap_uses_ce_isusedby apce"
+                        + " WHERE apce.ce_id_isusedby = nce." + ViewColumns.CertificateNow.ID
+                        + " AND apce.ap_id_uses = :applicationId)");
+
+        applyFilter(sql, filter);
+
+        return jdbc.sql(sql.toString())
+                .param("clientId", clientId)
+                .param("applicationId", applicationId)
                 .query(Long.class)
                 .single();
     }

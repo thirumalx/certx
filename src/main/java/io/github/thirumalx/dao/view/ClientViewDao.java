@@ -26,6 +26,14 @@ public class ClientViewDao extends ViewDao<Client> {
                 .optional();
     }
 
+    public java.util.Optional<Client> findNowByUniqueId(String uniqueId) {
+        String sql = selectWithAssignedUser() + " WHERE v." + ViewColumns.ClientNow.UNIQUE_ID + " = :uniqueId";
+        return jdbc.sql(sql)
+                .param("uniqueId", uniqueId)
+                .query(rowMapper())
+                .optional();
+    }
+
     public java.util.List<Client> listNow(Long applicationId, Long status, int page, int size) {
         String sql = selectWithAssignedUser() +
                 " JOIN " + TieColumns.ApplicationClientServedby.TABLE + " t ON v." + ViewColumns.ClientNow.ID
@@ -59,6 +67,7 @@ public class ClientViewDao extends ViewDao<Client> {
     protected RowMapper<Client> rowMapper() {
         return (rs, rowNum) -> Client.builder()
                 .id(rs.getLong(ViewColumns.ClientNow.ID))
+                .uniqueId(rs.getString(ViewColumns.ClientNow.UNIQUE_ID))
                 .name(rs.getString(ViewColumns.ClientNow.NAME))
                 .email(rs.getString(ViewColumns.ClientNow.EMAIL))
                 .mobileNumber(rs.getString(ViewColumns.ClientNow.MOBILE_NUMBER))

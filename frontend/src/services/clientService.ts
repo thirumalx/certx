@@ -9,6 +9,7 @@ import { type PageResponse } from './applicationService';
 export interface Client {
     id?: number;
     applicationId?: number;
+    uniqueId?: string;
     name: string;
     email?: string;
     mobileNumber?: string;
@@ -50,6 +51,19 @@ export const clientService = {
     getClient: async (applicationId: number, id: number): Promise<Client> => {
         const response = await fetch(`${baseUrl(applicationId)}/${id}`);
         if (!response.ok) throw new Error('Failed to fetch client');
+        return response.json();
+    },
+
+    /**
+     * Get a client by unique ID (for auto-fill)
+     */
+    getClientByUniqueId: async (
+        applicationId: number,
+        uniqueId: string
+    ): Promise<Client | null> => {
+        const response = await fetch(`${baseUrl(applicationId)}/unique/${encodeURIComponent(uniqueId)}`);
+        if (response.status === 404) return null;
+        if (!response.ok) throw new Error('Failed to fetch client by unique ID');
         return response.json();
     },
 

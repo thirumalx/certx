@@ -36,6 +36,13 @@ public interface AttributeColumns {
         String METADATA = "metadata_cl_nam";
     }
 
+    interface ClientUniqueId {
+        String TABLE = "certx.cl_uid_client_uniqueid";
+        String FK = "cl_uid_cl_id";
+        String VALUE = "cl_uid_client_uniqueid";
+        String METADATA = "metadata_cl_uid";
+    }
+
     interface ClientEmail {
         String TABLE = "certx.cl_eid_client_email";
         String FK = "cl_eid_cl_id";

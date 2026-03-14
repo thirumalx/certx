@@ -16,6 +16,7 @@ import io.github.thirumalx.dao.attribute.ClientEmailAttributeDao;
 import io.github.thirumalx.dao.attribute.ClientMobileNumberAttributeDao;
 import io.github.thirumalx.dao.attribute.ClientNameAttributeDao;
 import io.github.thirumalx.dao.attribute.ClientStatusAttributeDao;
+import io.github.thirumalx.dao.attribute.ClientUniqueIdAttributeDao;
 import io.github.thirumalx.dao.attribute.UserEmailAttributeDao;
 import io.github.thirumalx.dao.attribute.UserIdAttributeDao;
 import io.github.thirumalx.dao.attribute.UserMobileNumberAttributeDao;
@@ -28,6 +29,7 @@ import io.github.thirumalx.dto.PageRequest;
 import io.github.thirumalx.dto.PageResponse;
 import io.github.thirumalx.dto.User;
 import io.github.thirumalx.dto.UserAssignmentRequest;
+import io.github.thirumalx.exception.DuplicateKeyException;
 import io.github.thirumalx.exception.ResourceNotFoundException;
 import io.github.thirumalx.model.Anchor;
 import io.github.thirumalx.model.Attribute;
@@ -53,6 +55,7 @@ public class ClientService {
     private final ClientEmailAttributeDao clientEmailAttributeDao;
     private final ClientMobileNumberAttributeDao clientMobileNumberAttributeDao;
     private final ClientStatusAttributeDao clientStatusAttributeDao;
+    private final ClientUniqueIdAttributeDao clientUniqueIdAttributeDao;
     private final UserIdAttributeDao userIdAttributeDao;
     private final UserNameAttributeDao userNameAttributeDao;
     private final UserMobileNumberAttributeDao userMobileNumberAttributeDao;
@@ -72,6 +75,7 @@ public class ClientService {
             ClientEmailAttributeDao clientEmailAttributeDao,
             ClientMobileNumberAttributeDao clientMobileNumberAttributeDao,
             ClientStatusAttributeDao clientStatusAttributeDao,
+            ClientUniqueIdAttributeDao clientUniqueIdAttributeDao,
             ClientViewDao clientViewDao,
             ApplicationAnchorDao applicationAnchorDao, ApplicationClientTieDao applicationClientTieDao,
             UserViewDao userViewDao, UserClientAssignedTieDao userClientAssignedTieDao, MailService mailService,
@@ -83,6 +87,7 @@ public class ClientService {
         this.clientEmailAttributeDao = clientEmailAttributeDao;
         this.clientMobileNumberAttributeDao = clientMobileNumberAttributeDao;
         this.clientStatusAttributeDao = clientStatusAttributeDao;
+        this.clientUniqueIdAttributeDao = clientUniqueIdAttributeDao;
         this.userIdAttributeDao = userIdAttributeDao;
         this.userNameAttributeDao = userNameAttributeDao;
         this.userMobileNumberAttributeDao = userMobileNumberAttributeDao;
@@ -114,6 +119,24 @@ public class ClientService {
         }
         logger.debug("Application with ID: {} exists", client.getApplicationId());
 
+        String uniqueId = normalizeText(client.getUniqueId());
+        if (uniqueId != null && uniqueId.length() > 15) {
+            throw new IllegalArgumentException("Client uniqueId must be at most 15 characters");
+        }
+        client.setUniqueId(uniqueId);
+
+        if (uniqueId != null) {
+            Optional<Client> existingByUniqueId = clientViewDao.findNowByUniqueId(uniqueId);
+            if (existingByUniqueId.isPresent()) {
+                Client existing = existingByUniqueId.get();
+                if (!applicationClientTieDao.existsAssignment(client.getApplicationId(), existing.getId())) {
+                    applicationClientTieDao.insertHistorized(client.getApplicationId(), existing.getId(),
+                            Attribute.METADATA_ACTIVE, Instant.now());
+                }
+                return getClient(client.getApplicationId(), existing.getId());
+            }
+        }
+
         // Check for client duplication (name/email within the same application)
         List<Client> existingClients = clientViewDao.listNow(client.getApplicationId(), Knot.ACTIVE, 0,
                 Integer.MAX_VALUE);
@@ -127,6 +150,11 @@ public class ClientService {
             throw new IllegalArgumentException("Client with name or email already exists for this application");
         }
         logger.debug("No duplicate client found for application: {}", client.getApplicationId());
+
+        if (normalizeText(client.getName()) == null) {
+            logger.debug("Client name is required to create a client");
+            throw new IllegalArgumentException("Client name is required to create a client");
+        }
 
         // Create Client Anchor
         Long clientId = clientAnchorDao.insert(Anchor.METADATA_ACTIVE);
@@ -149,6 +177,11 @@ public class ClientService {
 
         // Add Status (Active)
         clientStatusAttributeDao.insert(clientId, Knot.ACTIVE, Instant.now(), Attribute.METADATA_ACTIVE);
+
+        // Add UniqueId (if provided)
+        if (uniqueId != null) {
+            clientUniqueIdAttributeDao.insert(clientId, uniqueId, Attribute.METADATA_ACTIVE);
+        }
         // Create Tie between Client and Application
         applicationClientTieDao.insertHistorized(client.getApplicationId(), clientId, Attribute.METADATA_ACTIVE,
                 Instant.now());
@@ -166,6 +199,11 @@ public class ClientService {
             throw new ResourceNotFoundException("Client not found for update");
         }
         client.setId(id);
+        String uniqueId = normalizeText(client.getUniqueId());
+        if (uniqueId != null && uniqueId.length() > 15) {
+            throw new IllegalArgumentException("Client uniqueId must be at most 15 characters");
+        }
+        client.setUniqueId(uniqueId);
         if (client.equals(existingClient)) {
             logger.debug("No changes detected for client with ID: {}", id);
             throw new IllegalArgumentException("No changes detected to update");
@@ -184,6 +222,15 @@ public class ClientService {
             clientMobileNumberAttributeDao.insert(id, client.getMobileNumber(), Instant.now(),
                     Attribute.METADATA_ACTIVE);
         }
+        // Update UniqueId
+        if (uniqueId != null && !uniqueId.equals(existingClient.getUniqueId())) {
+            Optional<Client> existingByUniqueId = clientViewDao.findNowByUniqueId(uniqueId);
+            if (existingByUniqueId.isPresent() && !existingByUniqueId.get().getId().equals(id)) {
+                throw new DuplicateKeyException("Client uniqueId must be unique");
+            }
+            clientUniqueIdAttributeDao.deleteByApplicationId(id);
+            clientUniqueIdAttributeDao.insert(id, uniqueId, Attribute.METADATA_ACTIVE);
+        }
         return getClient(applicationId, id);
     }
 
@@ -195,6 +242,14 @@ public class ClientService {
             return null;
         }
         return clientOptional.get();
+    }
+
+    public Optional<Client> findByUniqueId(String uniqueId) {
+        String normalized = normalizeText(uniqueId);
+        if (normalized == null) {
+            return Optional.empty();
+        }
+        return clientViewDao.findNowByUniqueId(normalized);
     }
 
     public PageResponse<Client> listClient(Long applicationId, PageRequest pageRequest) {

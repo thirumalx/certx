@@ -27,6 +27,13 @@ public interface TieColumns {
         String METADATA = "metadata_ce_isnotifiedby_nt_notifies";
     }
 
+    interface ApplicationCertificateUses {
+        String TABLE = "certx.ap_uses_ce_isusedby";
+        String ANCHOR1 = "ap_id_uses";
+        String ANCHOR2 = "ce_id_isusedby";
+        String METADATA = "metadata_ap_uses_ce_isusedby";
+    }
+
     interface NotificationReceivedBy {
         String TABLE = "certx.nt_sentto_cl_receives";
         String ANCHOR1 = "nt_id_sentto";

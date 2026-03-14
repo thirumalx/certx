@@ -18,8 +18,11 @@ import io.github.thirumalx.model.tie.ApplicationClient;
 @Repository
 public class ApplicationClientTieDao extends TieDao<ApplicationClient> {
 
+    private final JdbcClient jdbc;
+
     public ApplicationClientTieDao(JdbcClient jdbc) {
         super(jdbc, TieColumns.ApplicationClientServedby.TABLE, TieColumns.ApplicationClientServedby.ANCHOR1, TieColumns.ApplicationClientServedby.ANCHOR2, TieColumns.ApplicationClientServedby.METADATA, TieColumns.ApplicationClientServedby.CHANGED_AT);
+        this.jdbc = jdbc;
     }
 
     @Override
@@ -32,6 +35,18 @@ public class ApplicationClientTieDao extends TieDao<ApplicationClient> {
             Instant changedAt = ts != null ? ts.toInstant() : null;
             return new ApplicationClient(applicationId, clientId, metadataId, changedAt);
         };
+    }
+
+    public boolean existsAssignment(Long applicationId, Long clientId) {
+        String sql = "SELECT 1 FROM " + TieColumns.ApplicationClientServedby.TABLE +
+                " WHERE " + TieColumns.ApplicationClientServedby.ANCHOR1 + " = :applicationId " +
+                " AND " + TieColumns.ApplicationClientServedby.ANCHOR2 + " = :clientId LIMIT 1";
+        return jdbc.sql(sql)
+                .param("applicationId", applicationId)
+                .param("clientId", clientId)
+                .query(Integer.class)
+                .optional()
+                .isPresent();
     }
     
 }

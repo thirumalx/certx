@@ -121,6 +121,7 @@ export function ClientManagement() {
     const filteredClients = clients.filter((c) => {
         const matchesSearch =
             c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (c.uniqueId ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (c.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (c.mobileNumber ?? '').toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -171,7 +172,7 @@ export function ClientManagement() {
                         <div className="search-bar">
                             <input
                                 type="text"
-                                placeholder="Search by name, email..."
+                                placeholder="Search by name, unique ID, email..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="search-input"

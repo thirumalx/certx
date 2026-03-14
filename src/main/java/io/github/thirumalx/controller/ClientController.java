@@ -56,6 +56,14 @@ public class ClientController {
         return ResponseEntity.ok(updatedClient);
     }
 
+    @GetMapping("/unique/{uniqueId}")
+    public ResponseEntity<Client> getClientByUniqueId(@PathVariable Long applicationId,
+            @PathVariable String uniqueId) {
+        return clientService.findByUniqueId(uniqueId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Client> getClient(@PathVariable Long applicationId, @PathVariable Long id) {
         return ResponseEntity.ok(clientService.getClient(applicationId, id));

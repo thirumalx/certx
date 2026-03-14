@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { type Client } from '../services/clientService';
+import { type Client, clientService } from '../services/clientService';
 import '../styles/ApplicationForm.css';
 
 interface ClientFormProps {
@@ -12,11 +12,13 @@ interface ClientFormProps {
 
 export function ClientForm({
     client,
+    applicationId,
     onSubmit,
     onCancel,
     loading = false,
 }: ClientFormProps) {
     const [formData, setFormData] = useState<Client>({
+        uniqueId: '',
         name: '',
         email: '',
         mobileNumber: '',
@@ -28,6 +30,7 @@ export function ClientForm({
     useEffect(() => {
         if (client) {
             setFormData({
+                uniqueId: client.uniqueId ?? '',
                 name: client.name,
                 email: client.email ?? '',
                 mobileNumber: client.mobileNumber ?? '',
@@ -38,6 +41,9 @@ export function ClientForm({
 
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};
+        if (formData.uniqueId && formData.uniqueId.trim().length > 15) {
+            newErrors.uniqueId = 'Unique ID must be at most 15 characters';
+        }
         if (!formData.name.trim()) newErrors.name = 'Name is required';
         if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = 'Enter a valid email address';
@@ -54,6 +60,23 @@ export function ClientForm({
         if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
     };
 
+    const handleUniqueIdBlur = async () => {
+        const uniqueId = formData.uniqueId?.trim();
+        if (!uniqueId || uniqueId.length > 15) return;
+        try {
+            const match = await clientService.getClientByUniqueId(applicationId, uniqueId);
+            if (!match) return;
+            setFormData((prev) => ({
+                ...prev,
+                name: prev.name.trim() ? prev.name : (match.name ?? ''),
+                email: prev.email?.trim() ? prev.email : (match.email ?? ''),
+                mobileNumber: prev.mobileNumber?.trim() ? prev.mobileNumber : (match.mobileNumber ?? ''),
+            }));
+        } catch {
+            // Ignore lookup failures; user can still enter data manually.
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) onSubmit(formData);
@@ -65,6 +88,22 @@ export function ClientForm({
                 <h2>{client ? 'Edit Client' : 'Create New Client'}</h2>
 
                 <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label htmlFor="uniqueId">Unique ID</label>
+                        <input
+                            type="text"
+                            id="uniqueId"
+                            name="uniqueId"
+                            value={formData.uniqueId ?? ''}
+                            onChange={handleChange}
+                            onBlur={handleUniqueIdBlur}
+                            placeholder="Enter unique ID"
+                            maxLength={15}
+                            disabled={loading}
+                        />
+                        {errors.uniqueId && <span className="error-message">{errors.uniqueId}</span>}
+                    </div>
+
                     <div className="form-group">
                         <label htmlFor="name">Name *</label>
                         <input

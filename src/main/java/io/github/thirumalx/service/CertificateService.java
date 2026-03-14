@@ -18,6 +18,7 @@ import io.github.thirumalx.dao.attribute.CertificatePathAttributeDao;
 import io.github.thirumalx.dao.attribute.CertificateRevokedOnAttributeDao;
 import io.github.thirumalx.dao.attribute.CertificateSerialNumberAttributeDao;
 import io.github.thirumalx.dao.attribute.CertificateStatusAttributeDao;
+import io.github.thirumalx.dao.tie.ApplicationCertificateTieDao;
 import io.github.thirumalx.dao.tie.CertificateClientTieDao;
 import io.github.thirumalx.dao.view.CertificateViewDao;
 import io.github.thirumalx.dao.view.ClientViewDao;
@@ -63,13 +64,15 @@ public class CertificateService {
   private final CertificateLastTimeVerifiedOnAttributeDao lastTimeVerifiedOnAttributeDao;
   private final CertificatePasswordAttributeDao passwordAttributeDao;
   // Tie
+  private final ApplicationCertificateTieDao applicationCertificateTieDao;
   private final CertificateClientTieDao certificateClientTieDao;
 
   public CertificateService(ApplicationAnchorDao applicationDao, CertificateAnchorDao certificateAnchorDao,
       CertificateViewDao certificateViewDao, ClientViewDao clientViewDao,
       CertificateSerialNumberAttributeDao serialNumberAttributeDao, CertificatePathAttributeDao pathAttributeDao,
       CertificateStatusAttributeDao statusAttributeDao, CertificateIssuedOnAttributeDao issuedOnAttributeDao,
-      CertificateRevokedOnAttributeDao revokedOnAttributeDao, CertificateClientTieDao certificateClientTieDao,
+      CertificateRevokedOnAttributeDao revokedOnAttributeDao,
+      ApplicationCertificateTieDao applicationCertificateTieDao, CertificateClientTieDao certificateClientTieDao,
       CertificateNotAfterAttributeDao notAfterAttributeDao,
       CertificateLastTimeVerifiedOnAttributeDao lastTimeVerifiedOnAttributeDao,
       CertificatePasswordAttributeDao passwordAttributeDao) {
@@ -82,6 +85,7 @@ public class CertificateService {
     this.statusAttributeDao = statusAttributeDao;
     this.issuedOnAttributeDao = issuedOnAttributeDao;
     this.revokedOnAttributeDao = revokedOnAttributeDao;
+    this.applicationCertificateTieDao = applicationCertificateTieDao;
     this.certificateClientTieDao = certificateClientTieDao;
     this.notAfterAttributeDao = notAfterAttributeDao;
     this.lastTimeVerifiedOnAttributeDao = lastTimeVerifiedOnAttributeDao;
@@ -126,6 +130,7 @@ public class CertificateService {
       passwordAttributeDao.insert(certificateId, certificate.getPassword(), Attribute.METADATA_ACTIVE);
     }
     // Tie
+    applicationCertificateTieDao.insertWithMetadata(applicationId, certificateId, Attribute.METADATA_ACTIVE);
     certificateClientTieDao.insert(certificateId, clientId, Attribute.METADATA_ACTIVE);
 
     return getCertificate(certificateId);
@@ -213,9 +218,10 @@ public class CertificateService {
       PageRequest pageRequest) {
     logger.debug("Listing certificates for application: {} and client: {} with status: {}", applicationId, clientId,
         status);
-    List<Certificate> certificates = certificateViewDao.listNowByClient(clientId, status, pageRequest.page(),
+    List<Certificate> certificates = certificateViewDao.listNowByApplicationAndClient(applicationId, clientId, status,
+        pageRequest.page(),
         pageRequest.size());
-    long totalElements = certificateViewDao.countNowByClient(clientId, status);
+    long totalElements = certificateViewDao.countNowByApplicationAndClient(applicationId, clientId, status);
     int totalPages = (int) Math.ceil((double) totalElements / pageRequest.size());
     return new PageResponse<>(pageRequest.page(), pageRequest.size(), certificates, totalElements, totalPages);
   }
