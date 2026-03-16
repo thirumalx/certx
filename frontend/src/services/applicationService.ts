@@ -8,6 +8,8 @@ export interface Application {
   applicationName: string;
   uniqueId: string;
   status: string;
+  clientCount?: number;
+  certificateCount?: number;
 }
 
 export interface PageRequest {

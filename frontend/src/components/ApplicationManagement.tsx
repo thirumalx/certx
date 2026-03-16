@@ -211,6 +211,8 @@ export function ApplicationManagement() {
                       <th>ID</th>
                       <th>Application Name</th>
                       <th>Unique ID</th>
+                      <th>Clients</th>
+                      <th>Certificates</th>
                       <th>Status</th>
                       <th>Actions</th>
                     </tr>
@@ -227,6 +229,8 @@ export function ApplicationManagement() {
                           <td>{app.id}</td>
                           <td>{app.applicationName}</td>
                           <td>{app.uniqueId}</td>
+                          <td>{app.clientCount ?? 0}</td>
+                          <td>{app.certificateCount ?? 0}</td>
                           <td>
                             <span className={`status-badge status-${app.status.toLowerCase()}`}>
                               {app.status}
@@ -261,7 +265,7 @@ export function ApplicationManagement() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="no-data">
+                        <td colSpan={7} className="no-data">
                           {searchTerm ? 'No applications found matching your search' : 'No applications yet'}
                         </td>
                       </tr>
