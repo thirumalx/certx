@@ -38,6 +38,43 @@ public class CertificateViewDao extends ViewDao<Certificate> {
     }
 
     /**
+     * Find a certificate by serial number from the now view, optionally scoped to
+     * application and/or client.
+     */
+    public Optional<Certificate> findNowBySerialNumber(String serialNumber, Long applicationId, Long clientId) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT DISTINCT nce.* FROM " + ViewColumns.CertificateNow.TABLE + " nce"
+                        + " WHERE nce." + ViewColumns.CertificateNow.SERIAL_NUMBER + " = :serialNumber");
+
+        if (clientId != null) {
+            sql.append(" AND EXISTS (")
+                    .append(" SELECT 1 FROM certx.ce_belongsto_cl_owns tie")
+                    .append(" WHERE tie.ce_id_belongsto = nce.").append(ViewColumns.CertificateNow.ID)
+                    .append(" AND tie.cl_id_owns = :clientId)");
+        }
+
+        if (applicationId != null) {
+            sql.append(" AND EXISTS (")
+                    .append(" SELECT 1 FROM certx.ap_uses_ce_isusedby apce")
+                    .append(" WHERE apce.ce_id_isusedby = nce.").append(ViewColumns.CertificateNow.ID)
+                    .append(" AND apce.ap_id_uses = :applicationId)");
+        }
+
+        sql.append(" ORDER BY nce.").append(ViewColumns.CertificateNow.ID).append(" DESC LIMIT 1");
+
+        var query = jdbc.sql(sql.toString())
+                .param("serialNumber", serialNumber);
+        if (clientId != null) {
+            query = query.param("clientId", clientId);
+        }
+        if (applicationId != null) {
+            query = query.param("applicationId", applicationId);
+        }
+
+        return query.query(rowMapper()).optional();
+    }
+
+    /**
      * List certificates for a given client (by status) from the now view, with
      * pagination.
      */

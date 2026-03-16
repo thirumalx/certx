@@ -25,6 +25,14 @@ public class ApplicationViewDao extends ViewDao<Application> {
         return findById(ViewColumns.ApplicationNow.TABLE, ViewColumns.ApplicationNow.ID, id);
     }
 
+    public java.util.Optional<Application> findNowByUniqueId(String uniqueId) {
+        return jdbc.sql("SELECT * FROM " + ViewColumns.ApplicationNow.TABLE + " WHERE "
+                + ViewColumns.ApplicationNow.UNIQUE_ID + " = :uniqueId")
+                .param("uniqueId", uniqueId)
+                .query(rowMapper())
+                .optional();
+    }
+
     public java.util.List<Application> listNow(Long status, int page, int size) {
         return jdbc.sql(
                 "SELECT * FROM " + ViewColumns.ApplicationNow.TABLE + " WHERE " + ViewColumns.ApplicationNow.STATUS_ID_COL + " = :status ORDER BY " + ViewColumns.ApplicationNow.ID + " LIMIT :limit OFFSET :offset")

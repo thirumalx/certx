@@ -43,17 +43,21 @@
   border-color: #4a90e2;
 }
 
-.page-title-group h2 {
-  margin: 0 0 2px 0;
+.page-title {
+  margin: 0;
   color: #222;
   font-size: 22px;
   font-weight: 700;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.page-subtitle {
+.page-title-app {
   font-size: 13px;
   color: #888;
-  margin: 0;
+  font-weight: 500;
 }
 
 /* Management Container */
@@ -207,10 +211,16 @@
 
 .clients-table tbody tr {
   transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
 .clients-table tbody tr:hover {
   background-color: #f0f6ff;
+}
+
+.clients-table tbody tr:focus {
+  outline: 2px solid #4a90e2;
+  outline-offset: -2px;
 }
 
 .clients-table tbody tr.status-active {

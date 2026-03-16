@@ -118,6 +118,10 @@ export function ClientManagement() {
         setError(null);
     };
 
+    const navigateToCertificates = (clientId: number) => {
+        navigate(`/applications/${appId}/clients/${clientId}/certificates`);
+    };
+
     const filteredClients = clients.filter((c) => {
         const matchesSearch =
             c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -162,10 +166,12 @@ export function ClientManagement() {
                                 ← Applications
                             </button>
                             <div className="page-title-group">
-                                <h2>Client Management</h2>
-                                {applicationName && (
-                                    <p className="page-subtitle">{applicationName}</p>
-                                )}
+                                <h2 className="page-title">
+                                    Client Management
+                                    {applicationName && (
+                                        <span className="page-title-app"> - {applicationName}</span>
+                                    )}
+                                </h2>
                             </div>
                         </div>
 
@@ -205,10 +211,11 @@ export function ClientManagement() {
                                     <thead>
                                         <tr>
                                             <th>ID</th>
+                                            <th>UID</th>
                                             <th>Name</th>
                                             <th>Email</th>
                                             <th>Mobile</th>
-                                            <th>Assigned Users</th>
+                                            <th>Assignees</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -219,15 +226,20 @@ export function ClientManagement() {
                                                 <tr
                                                     key={client.id}
                                                     className={`status-${client.status.toLowerCase()}`}
+                                                    onClick={() => navigateToCertificates(client.id!)}
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === 'Enter' || event.key === ' ') {
+                                                            event.preventDefault();
+                                                            navigateToCertificates(client.id!);
+                                                        }
+                                                    }}
+                                                    role="button"
+                                                    tabIndex={0}
                                                 >
                                                     <td>{client.id}</td>
+                                                    <td>{client.uniqueId ?? '—'}</td>
                                                     <td>
-                                                        <span
-                                                            className="clickable-name"
-                                                            onClick={() => navigate(`/applications/${appId}/clients/${client.id}/certificates`)}
-                                                        >
-                                                            {client.name}
-                                                        </span>
+                                                        <span className="clickable-name">{client.name}</span>
                                                     </td>
                                                     <td>{client.email ?? '—'}</td>
                                                     <td>{client.mobileNumber ?? '—'}</td>
@@ -240,34 +252,40 @@ export function ClientManagement() {
                                                     <td className="actions-cell">
                                                         <button
                                                             className="btn btn-sm btn-info"
-                                                            onClick={() => handleEdit(client)}
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                handleEdit(client);
+                                                            }}
                                                             disabled={loading}
                                                         >
                                                             Edit
                                                         </button>
                                                         <button
                                                             className="btn btn-sm btn-success"
-                                                            onClick={() =>
-                                                                navigate(
-                                                                    `/applications/${appId}/clients/${client.id}/certificates`
-                                                                )
-                                                            }
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                navigateToCertificates(client.id!);
+                                                            }}
                                                         >
                                                             Certificates →
                                                         </button>
                                                         <button
                                                             className="btn btn-sm btn-outline"
-                                                            onClick={() =>
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
                                                                 navigate(
                                                                     `/applications/${appId}/clients/${client.id}/assignees`
-                                                                )
-                                                            }
+                                                                );
+                                                            }}
                                                         >
                                                             Assignees
                                                         </button>
                                                         <button
                                                             className="btn btn-sm btn-danger"
-                                                            onClick={() => handleDelete(client.id!)}
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                handleDelete(client.id!);
+                                                            }}
                                                             disabled={loading}
                                                         >
                                                             Delete

@@ -5,9 +5,12 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.github.thirumalx.cache.CacheNames;
 import io.github.thirumalx.dao.anchor.ApplicationAnchorDao;
 import io.github.thirumalx.dao.anchor.CertificateAnchorDao;
 import io.github.thirumalx.dao.attribute.CertificateIssuedOnAttributeDao;
@@ -20,9 +23,11 @@ import io.github.thirumalx.dao.attribute.CertificateSerialNumberAttributeDao;
 import io.github.thirumalx.dao.attribute.CertificateStatusAttributeDao;
 import io.github.thirumalx.dao.tie.ApplicationCertificateTieDao;
 import io.github.thirumalx.dao.tie.CertificateClientTieDao;
+import io.github.thirumalx.dao.view.ApplicationViewDao;
 import io.github.thirumalx.dao.view.CertificateViewDao;
 import io.github.thirumalx.dao.view.ClientViewDao;
 import io.github.thirumalx.dto.Certificate;
+import io.github.thirumalx.dto.CertificateValidityResponse;
 import io.github.thirumalx.dto.Client;
 import io.github.thirumalx.dto.PageRequest;
 import io.github.thirumalx.dto.PageResponse;
@@ -51,6 +56,7 @@ public class CertificateService {
   Logger logger = LoggerFactory.getLogger(CertificateService.class);
 
   private final ApplicationAnchorDao applicationDao;
+  private final ApplicationViewDao applicationViewDao;
   private final CertificateAnchorDao certificateAnchorDao;
   private final CertificateViewDao certificateViewDao;
   private final ClientViewDao clientViewDao;
@@ -68,8 +74,11 @@ public class CertificateService {
   private final ApplicationCertificateTieDao applicationCertificateTieDao;
   private final CertificateClientTieDao certificateClientTieDao;
 
-  public CertificateService(ApplicationAnchorDao applicationDao, CertificateAnchorDao certificateAnchorDao,
-      CertificateViewDao certificateViewDao, ClientViewDao clientViewDao,
+  public CertificateService(ApplicationAnchorDao applicationDao,
+      ApplicationViewDao applicationViewDao,
+      CertificateAnchorDao certificateAnchorDao,
+      CertificateViewDao certificateViewDao,
+      ClientViewDao clientViewDao,
       CertificateSerialNumberAttributeDao serialNumberAttributeDao, CertificatePathAttributeDao pathAttributeDao,
       CertificateStatusAttributeDao statusAttributeDao, CertificateIssuedOnAttributeDao issuedOnAttributeDao,
       CertificateRevokedOnAttributeDao revokedOnAttributeDao,
@@ -79,6 +88,7 @@ public class CertificateService {
       CertificatePasswordAttributeDao passwordAttributeDao,
       PasswordCryptoService passwordCryptoService) {
     this.applicationDao = applicationDao;
+    this.applicationViewDao = applicationViewDao;
     this.certificateAnchorDao = certificateAnchorDao;
     this.certificateViewDao = certificateViewDao;
     this.clientViewDao = clientViewDao;
@@ -147,6 +157,7 @@ public class CertificateService {
   }
 
   @Transactional
+  @CacheEvict(cacheNames = CacheNames.CERTIFICATE_VALIDITY, allEntries = true)
   public boolean delete(Long id) {
     logger.info("Revoking certificate with ID: {}", id);
     statusAttributeDao.insert(id, Knot.DELETED, Instant.now(), Attribute.METADATA_ACTIVE);
@@ -154,6 +165,7 @@ public class CertificateService {
   }
 
   @Transactional
+  @CacheEvict(cacheNames = CacheNames.CERTIFICATE_VALIDITY, allEntries = true)
   public boolean markAsRevoked(Long id, Instant revokedAt) {
     logger.info("Marking certificate {} as REVOKED at {}", id, revokedAt);
     statusAttributeDao.insert(id, Knot.REVOKED, Instant.now(), Attribute.METADATA_ACTIVE);
@@ -228,6 +240,75 @@ public class CertificateService {
     long totalElements = certificateViewDao.countNowByApplicationAndClient(applicationId, clientId, status);
     int totalPages = (int) Math.ceil((double) totalElements / pageRequest.size());
     return new PageResponse<>(pageRequest.page(), pageRequest.size(), certificates, totalElements, totalPages);
+  }
+
+  @Cacheable(cacheNames = CacheNames.CERTIFICATE_VALIDITY,
+      key = "(#serialNumber == null ? '' : #serialNumber.trim()) + '|' + "
+          + "(#applicationUniqueId == null ? '' : #applicationUniqueId.trim()) + '|' + "
+          + "(#clientUniqueId == null ? '' : #clientUniqueId.trim())")
+  public CertificateValidityResponse checkCertificateValidity(String serialNumber,
+      String applicationUniqueId,
+      String clientUniqueId) {
+    String normalizedSerial = normalizeText(serialNumber);
+    if (normalizedSerial == null || normalizedSerial.isEmpty()) {
+      throw new IllegalArgumentException("Serial number is required");
+    }
+
+    String normalizedApplicationUniqueId = normalizeText(applicationUniqueId);
+    Long applicationId = null;
+    if (normalizedApplicationUniqueId != null) {
+      applicationId = applicationViewDao.findNowByUniqueId(normalizedApplicationUniqueId)
+          .map(io.github.thirumalx.dto.Application::getId)
+          .orElse(null);
+      if (applicationId == null) {
+        return new CertificateValidityResponse(normalizedSerial, false, "APPLICATION_NOT_FOUND", null, null);
+      }
+    }
+
+    String normalizedClientUniqueId = normalizeText(clientUniqueId);
+    Long clientId = null;
+    if (normalizedClientUniqueId != null) {
+      clientId = clientViewDao.findNowByUniqueId(normalizedClientUniqueId)
+          .map(Client::getId)
+          .orElse(null);
+      if (clientId == null) {
+        return new CertificateValidityResponse(normalizedSerial, false, "CLIENT_NOT_FOUND", null, null);
+      }
+    }
+
+    Optional<Certificate> certificate = certificateViewDao.findNowBySerialNumber(normalizedSerial, applicationId,
+        clientId);
+    if (certificate.isEmpty()) {
+      return new CertificateValidityResponse(normalizedSerial, false, "NOT_FOUND", null, null);
+    }
+
+    Certificate cert = certificate.get();
+    boolean revoked = cert.getRevokedOn() != null;
+    if (revoked) {
+      return new CertificateValidityResponse(cert.getSerialNumber(), false, "REVOKED", cert.getNotAfter(),
+          cert.getRevokedOn());
+    }
+
+    if (cert.getNotAfter() == null) {
+      return new CertificateValidityResponse(cert.getSerialNumber(), false, "NO_EXPIRY", null, cert.getRevokedOn());
+    }
+
+    boolean expired = LocalDateTime.now().isAfter(cert.getNotAfter());
+    if (expired) {
+      return new CertificateValidityResponse(cert.getSerialNumber(), false, "EXPIRED", cert.getNotAfter(),
+          cert.getRevokedOn());
+    }
+
+    return new CertificateValidityResponse(cert.getSerialNumber(), true, "VALID", cert.getNotAfter(),
+        cert.getRevokedOn());
+  }
+
+  private String normalizeText(String value) {
+    if (value == null) {
+      return null;
+    }
+    String trimmed = value.trim();
+    return trimmed.isEmpty() ? null : trimmed;
   }
 
 }
