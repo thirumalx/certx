@@ -178,13 +178,20 @@ public class CertificateViewDao extends ViewDao<Certificate> {
         switch (filter.toUpperCase()) {
             case "ACTIVE":
                 sql.append(
-                        " AND nce.ce_ron_certificate_revokedon IS NULL AND (nce.ce_naf_certificate_notafter IS NULL OR nce.ce_naf_certificate_notafter > NOW())");
+                        " AND nce.ce_ron_certificate_revokedon IS NULL"
+                                + " AND (nce.ce_naf_certificate_notafter IS NULL OR nce.ce_naf_certificate_notafter > NOW())"
+                                + " AND nce." + ViewColumns.CertificateNow.STATUS + " <> 'DELETED'");
                 break;
             case "EXPIRED":
-                sql.append(" AND nce.ce_ron_certificate_revokedon IS NULL AND nce.ce_naf_certificate_notafter < NOW()");
+                sql.append(
+                        " AND nce.ce_ron_certificate_revokedon IS NULL"
+                                + " AND nce.ce_naf_certificate_notafter < NOW()"
+                                + " AND nce." + ViewColumns.CertificateNow.STATUS + " <> 'DELETED'");
                 break;
             case "REVOKED":
-                sql.append(" AND nce.ce_ron_certificate_revokedon IS NOT NULL");
+                sql.append(
+                        " AND nce.ce_ron_certificate_revokedon IS NOT NULL"
+                                + " AND nce." + ViewColumns.CertificateNow.STATUS + " <> 'DELETED'");
                 break;
             case "DELETED":
                 sql.append(" AND nce.ce_sta_sta_status = 'DELETED'");
