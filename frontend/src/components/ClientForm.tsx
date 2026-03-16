@@ -8,6 +8,7 @@ interface ClientFormProps {
     onSubmit: (client: Client) => void;
     onCancel: () => void;
     loading?: boolean;
+    errorMessage?: string | null;
 }
 
 export function ClientForm({
@@ -16,6 +17,7 @@ export function ClientForm({
     onSubmit,
     onCancel,
     loading = false,
+    errorMessage = null,
 }: ClientFormProps) {
     const [formData, setFormData] = useState<Client>({
         uniqueId: '',
@@ -88,6 +90,11 @@ export function ClientForm({
                 <h2>{client ? 'Edit Client' : 'Create New Client'}</h2>
 
                 <form onSubmit={handleSubmit}>
+                    {errorMessage && (
+                        <div className="form-error-banner" role="alert">
+                            {errorMessage}
+                        </div>
+                    )}
                     <div className="form-group">
                         <label htmlFor="uniqueId">Unique ID</label>
                         <input

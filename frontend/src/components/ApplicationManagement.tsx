@@ -15,6 +15,7 @@ export function ApplicationManagement() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
@@ -63,6 +64,7 @@ export function ApplicationManagement() {
     try {
       setFormLoading(true);
       setError(null);
+      setFormError(null);
 
       if (selectedApplication?.id) {
         await applicationService.updateApplication(selectedApplication.id, formData);
@@ -75,7 +77,7 @@ export function ApplicationManagement() {
       setSelectedApplication(undefined);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Operation failed';
-      setError(errorMessage);
+      setFormError(errorMessage);
     } finally {
       setFormLoading(false);
     }
@@ -86,6 +88,7 @@ export function ApplicationManagement() {
       const fullApplication = await applicationService.getApplication(application.id!);
       setSelectedApplication(fullApplication);
       setShowForm(true);
+      setFormError(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load application';
       setError(errorMessage);
@@ -110,7 +113,7 @@ export function ApplicationManagement() {
   const handleFormCancel = () => {
     setShowForm(false);
     setSelectedApplication(undefined);
-    setError(null);
+    setFormError(null);
   };
 
   const filteredApplications = applications.filter((app) => {
@@ -190,6 +193,7 @@ export function ApplicationManagement() {
               className="btn btn-primary"
               onClick={() => {
                 setSelectedApplication(undefined);
+                setFormError(null);
                 setShowForm(true);
               }}
               disabled={loading}
@@ -198,7 +202,7 @@ export function ApplicationManagement() {
             </button>
           </div>
 
-          {error && <div className="alert alert-error">{error}</div>}
+          {!showForm && error && <div className="alert alert-error">{error}</div>}
 
           {loading && !showForm ? (
             <div className="loading">Loading applications...</div>
@@ -329,6 +333,7 @@ export function ApplicationManagement() {
               onSubmit={handleFormSubmit}
               onCancel={handleFormCancel}
               loading={formLoading}
+              errorMessage={formError}
             />
           )}
         </main>

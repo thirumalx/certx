@@ -7,6 +7,7 @@ interface ApplicationFormProps {
   onSubmit: (application: Application) => void;
   onCancel: () => void;
   loading?: boolean;
+  errorMessage?: string | null;
 }
 
 export function ApplicationForm({
@@ -14,6 +15,7 @@ export function ApplicationForm({
   onSubmit,
   onCancel,
   loading = false,
+  errorMessage = null,
 }: ApplicationFormProps) {
   const [formData, setFormData] = useState<Application>({
     applicationName: '',
@@ -73,6 +75,11 @@ export function ApplicationForm({
         <h2>{application ? 'Edit Application' : 'Create New Application'}</h2>
 
         <form onSubmit={handleSubmit}>
+          {errorMessage && (
+            <div className="form-error-banner" role="alert">
+              {errorMessage}
+            </div>
+          )}
           <div className="form-group">
             <label htmlFor="applicationName">Application Name *</label>
             <input

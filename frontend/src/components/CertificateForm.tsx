@@ -11,6 +11,7 @@ interface CertificateFormProps {
     onCancel: () => void;
     loading?: boolean;
     readOnly?: boolean;
+    errorMessage?: string | null;
 }
 
 export function CertificateForm({
@@ -22,6 +23,7 @@ export function CertificateForm({
     onCancel,
     loading = false,
     readOnly = false,
+    errorMessage = null,
 }: CertificateFormProps) {
     const [formData, setFormData] = useState<Certificate>(
         certificate || {
@@ -133,6 +135,11 @@ export function CertificateForm({
                 <h2>{certificate ? 'Edit Certificate' : 'Add New Certificate'}</h2>
 
                 <form onSubmit={handleSubmit} className="two-column-form">
+                    {errorMessage && (
+                        <div className="form-error-banner" role="alert">
+                            {errorMessage}
+                        </div>
+                    )}
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="cert-path">Certificate Path *</label>

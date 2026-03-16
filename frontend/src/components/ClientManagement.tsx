@@ -20,6 +20,7 @@ export function ClientManagement() {
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(0);
@@ -73,6 +74,7 @@ export function ClientManagement() {
         try {
             setFormLoading(true);
             setError(null);
+            setFormError(null);
             if (selectedClient?.id) {
                 await clientService.updateClient(appId, selectedClient.id, formData);
             } else {
@@ -82,7 +84,7 @@ export function ClientManagement() {
             setShowForm(false);
             setSelectedClient(undefined);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Operation failed');
+            setFormError(err instanceof Error ? err.message : 'Operation failed');
         } finally {
             setFormLoading(false);
         }
@@ -93,6 +95,7 @@ export function ClientManagement() {
             const full = await clientService.getClient(appId, client.id!);
             setSelectedClient(full);
             setShowForm(true);
+            setFormError(null);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load client');
         }
@@ -115,7 +118,7 @@ export function ClientManagement() {
     const handleFormCancel = () => {
         setShowForm(false);
         setSelectedClient(undefined);
-        setError(null);
+        setFormError(null);
     };
 
     const navigateToCertificates = (clientId: number) => {
@@ -192,6 +195,7 @@ export function ClientManagement() {
                             className="btn btn-primary"
                             onClick={() => {
                                 setSelectedClient(undefined);
+                                setFormError(null);
                                 setShowForm(true);
                             }}
                             disabled={loading}
@@ -200,7 +204,7 @@ export function ClientManagement() {
                         </button>
                     </div>
 
-                    {error && <div className="alert alert-error">{error}</div>}
+                    {!showForm && error && <div className="alert alert-error">{error}</div>}
 
                     {loading && !showForm ? (
                         <div className="loading">Loading clients...</div>
@@ -360,6 +364,7 @@ export function ClientManagement() {
                             onSubmit={handleFormSubmit}
                             onCancel={handleFormCancel}
                             loading={formLoading}
+                            errorMessage={formError}
                         />
                     )}
                 </main>

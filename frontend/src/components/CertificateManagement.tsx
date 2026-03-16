@@ -21,6 +21,7 @@ export function CertificateManagement() {
     const [certificates, setCertificates] = useState<Certificate[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [formError, setFormError] = useState<string | null>(null);
     const [showForm, setShowForm] = useState(false);
     const [editingCert, setEditingCert] = useState<Certificate | null>(null);
     const [formLoading, setFormLoading] = useState(false);
@@ -71,6 +72,7 @@ export function CertificateManagement() {
         try {
             setFormLoading(true);
             setError(null);
+            setFormError(null);
             if (certData.id) {
                 await certificateService.updateCertificate(appId, cId, certData.id, certData);
             } else {
@@ -83,7 +85,7 @@ export function CertificateManagement() {
             setEditingCert(null);
             loadCertificates(paging.page, activeFilter);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save certificate');
+            setFormError(err instanceof Error ? err.message : 'Failed to save certificate');
         } finally {
             setFormLoading(false);
         }
@@ -105,6 +107,7 @@ export function CertificateManagement() {
     const handleEdit = (cert: Certificate) => {
         setEditingCert(cert);
         setShowForm(true);
+        setFormError(null);
     };
 
     const handleNotify = async (certId: number) => {
@@ -251,14 +254,17 @@ export function CertificateManagement() {
 
                         <button
                             className="btn btn-primary"
-                            onClick={() => setShowForm(true)}
+                            onClick={() => {
+                                setFormError(null);
+                                setShowForm(true);
+                            }}
                             disabled={loading}
                         >
                             + Add New Certificate
                         </button>
                     </div>
 
-                    {error && <div className="alert alert-error">{error}</div>}
+                    {!showForm && error && <div className="alert alert-error">{error}</div>}
 
                     {loading && !showForm ? (
                         <div className="loading">Loading certificates...</div>
@@ -455,7 +461,7 @@ export function CertificateManagement() {
                             onCancel={() => {
                                 setShowForm(false);
                                 setEditingCert(null);
-                                setError(null);
+                                setFormError(null);
                             }}
                             loading={formLoading}
                             readOnly={!!editingCert
@@ -464,6 +470,7 @@ export function CertificateManagement() {
                                     || editingCert.status === '2'
                                     || (editingCert.status ?? '').toString().toUpperCase() === 'DELETED'
                                     || (editingCert.status ?? '').toString().toUpperCase() === 'REVOKED')}
+                            errorMessage={formError}
                         />
                     )}
                 </main>

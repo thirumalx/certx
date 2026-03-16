@@ -67,6 +67,17 @@
   margin-bottom: 12px;
 }
 
+.form-error-banner {
+  background: #fde8e8;
+  color: #9b1c1c;
+  border: 1px solid #f5c6cb;
+  border-left: 4px solid #f08b8b;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 8px;
