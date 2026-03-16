@@ -24,6 +24,7 @@ import io.github.thirumalx.dto.Certificate;
 import io.github.thirumalx.model.Knot;
 import io.github.thirumalx.service.CertificateService;
 import io.github.thirumalx.service.CRLService;
+import io.github.thirumalx.service.PasswordCryptoService;
 
 /**
  * @author Thirumal M
@@ -39,13 +40,16 @@ public class CRLCheckScheduler {
     private final CertificateViewDao certificateViewDao;
     private final CertificateService certificateService;
     private final CRLService crlService;
+    private final PasswordCryptoService passwordCryptoService;
 
     public CRLCheckScheduler(CertificateViewDao certificateViewDao,
             CertificateService certificateService,
-            CRLService crlService) {
+            CRLService crlService,
+            PasswordCryptoService passwordCryptoService) {
         this.certificateViewDao = certificateViewDao;
         this.certificateService = certificateService;
         this.crlService = crlService;
+        this.passwordCryptoService = passwordCryptoService;
     }
 
     /**
@@ -68,7 +72,8 @@ public class CRLCheckScheduler {
             }
             X509Certificate x509Cert;
             if (cert.ispfxCertificate()) {
-                x509Cert = loadX509FromPFX(cert, cert.getPassword());
+                String decryptedPassword = passwordCryptoService.decrypt(cert.getPassword());
+                x509Cert = loadX509FromPFX(cert, decryptedPassword);
             } else {
                 x509Cert = loadX509Certificate(cert);
             }

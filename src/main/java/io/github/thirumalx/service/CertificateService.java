@@ -63,6 +63,7 @@ public class CertificateService {
   private final CertificateNotAfterAttributeDao notAfterAttributeDao;
   private final CertificateLastTimeVerifiedOnAttributeDao lastTimeVerifiedOnAttributeDao;
   private final CertificatePasswordAttributeDao passwordAttributeDao;
+  private final PasswordCryptoService passwordCryptoService;
   // Tie
   private final ApplicationCertificateTieDao applicationCertificateTieDao;
   private final CertificateClientTieDao certificateClientTieDao;
@@ -75,7 +76,8 @@ public class CertificateService {
       ApplicationCertificateTieDao applicationCertificateTieDao, CertificateClientTieDao certificateClientTieDao,
       CertificateNotAfterAttributeDao notAfterAttributeDao,
       CertificateLastTimeVerifiedOnAttributeDao lastTimeVerifiedOnAttributeDao,
-      CertificatePasswordAttributeDao passwordAttributeDao) {
+      CertificatePasswordAttributeDao passwordAttributeDao,
+      PasswordCryptoService passwordCryptoService) {
     this.applicationDao = applicationDao;
     this.certificateAnchorDao = certificateAnchorDao;
     this.certificateViewDao = certificateViewDao;
@@ -90,6 +92,7 @@ public class CertificateService {
     this.notAfterAttributeDao = notAfterAttributeDao;
     this.lastTimeVerifiedOnAttributeDao = lastTimeVerifiedOnAttributeDao;
     this.passwordAttributeDao = passwordAttributeDao;
+    this.passwordCryptoService = passwordCryptoService;
   }
 
   @Transactional
@@ -127,7 +130,8 @@ public class CertificateService {
       if (certificate.getPassword() == null) {
         throw new IllegalArgumentException("Password is required for PFX/P12 files");
       }
-      passwordAttributeDao.insert(certificateId, certificate.getPassword(), Attribute.METADATA_ACTIVE);
+      String encryptedPassword = passwordCryptoService.encrypt(certificate.getPassword());
+      passwordAttributeDao.insert(certificateId, encryptedPassword, Attribute.METADATA_ACTIVE);
     }
     // Tie
     applicationCertificateTieDao.insertWithMetadata(applicationId, certificateId, Attribute.METADATA_ACTIVE);
