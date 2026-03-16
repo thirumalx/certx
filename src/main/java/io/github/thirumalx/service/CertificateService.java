@@ -125,9 +125,14 @@ public class CertificateService {
           clientId);
       if (existing.isPresent()) {
         Certificate found = existing.get();
-        throw new DuplicateKeyException(
-            "Certificate with serial number " + normalizedSerial
-                + " already exists for this application and client (status: " + found.getStatus() + ")");
+        String statusValue = found.getStatus() != null ? found.getStatus().toUpperCase() : "";
+        boolean isDeleted = "DELETED".equals(statusValue) || "0".equals(statusValue);
+        boolean isRevoked = found.getRevokedOn() != null || "REVOKED".equals(statusValue) || "2".equals(statusValue);
+        if (!isDeleted && !isRevoked) {
+          throw new DuplicateKeyException(
+              "Certificate with serial number " + normalizedSerial
+                  + " already exists for this application and client (status: " + found.getStatus() + ")");
+        }
       }
     }
 
