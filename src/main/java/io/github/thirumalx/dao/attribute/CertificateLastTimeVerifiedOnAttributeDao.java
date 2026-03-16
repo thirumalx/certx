@@ -39,7 +39,14 @@ public class CertificateLastTimeVerifiedOnAttributeDao extends AttributeDao<Cert
                 + " (" + AttributeColumns.CertificateLastTimeVerifiedOn.FK
                 + ", " + AttributeColumns.CertificateLastTimeVerifiedOn.VALUE
                 + ", " + AttributeColumns.CertificateLastTimeVerifiedOn.METADATA
-                + ") VALUES (:id, :value, :metadata) RETURNING " + AttributeColumns.CertificateLastTimeVerifiedOn.FK)
+                + ") VALUES (:id, :value, :metadata)"
+                + " ON CONFLICT (" + AttributeColumns.CertificateLastTimeVerifiedOn.FK + ")"
+                + " DO UPDATE SET "
+                + AttributeColumns.CertificateLastTimeVerifiedOn.VALUE + " = EXCLUDED."
+                + AttributeColumns.CertificateLastTimeVerifiedOn.VALUE + ", "
+                + AttributeColumns.CertificateLastTimeVerifiedOn.METADATA + " = EXCLUDED."
+                + AttributeColumns.CertificateLastTimeVerifiedOn.METADATA
+                + " RETURNING " + AttributeColumns.CertificateLastTimeVerifiedOn.FK)
                 .param("id", anchorId)
                 .param("value", java.sql.Timestamp.from(lastTimeVerifiedOn))
                 .param("metadata", metadata)

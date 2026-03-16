@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.github.thirumalx.dao.view.CertificateViewDao;
+import io.github.thirumalx.dto.CRLCheckRunResponse;
 import io.github.thirumalx.dto.Certificate;
 import io.github.thirumalx.model.Knot;
 import io.github.thirumalx.service.CertificateService;
@@ -28,9 +29,13 @@ import io.github.thirumalx.service.PasswordCryptoService;
 
 /**
  * @author Thirumal M
- * Scheduled task that runs every 6 hours to check all ACTIVE certificates for revocation by consulting their CRL distribution points.
- * If a certificate is found to be revoked, it updates its status in the database to REVOKED and records the revocation time.
- * 
+ * Scheduled task that runs every 6 hours to check all ACTIVE certificates for revocation by consulting their CRL
+ * distribution points. If a certificate is found to be revoked, it updates its status in the database to REVOKED
+ * and records the revocation time.
+ * <p>
+ * Schedule: 00:00, 06:00, 12:00, 18:00 (server time).
+ * Manual trigger: REST API <code>/scheduler/crl-check/run</code> invokes the same logic and returns a summary.
+ * </p>
  */
 @Component
 public class CRLCheckScheduler {
@@ -53,37 +58,72 @@ public class CRLCheckScheduler {
     }
 
     /**
-     * Runs every 6 hours at 00:00, 06:00, 12:00, 18:00.
+     * Runs every 6 hours at 00:00, 06:00, 12:00, 18:00 (server time).
      * Checks all ACTIVE certificates for revocation.
      */
     @Scheduled(cron = "0 0 0,6,12,18 * * ?")
     @Transactional
     public void checkAllCertificatesForRevocation() {
-        logger.info("Starting scheduled CRL check for all ACTIVE certificates");
+        runCrlCheckInternal();
+    }
+
+    /**
+     * Manually runs the CRL check and returns a summary for UI/API usage.
+     */
+    @Transactional
+    public CRLCheckRunResponse runCrlCheckNow() {
+        return runCrlCheckInternal();
+    }
+
+    private CRLCheckRunResponse runCrlCheckInternal() {
+        Instant startedAt = Instant.now();
+        logger.info("Starting CRL check for all ACTIVE certificates");
         // Fetch all active certificates
         List<Certificate> activeCerts = certificateViewDao.listNow(Knot.ACTIVE, 0, Integer.MAX_VALUE);
         logger.info("Found {} active certificates to check", activeCerts.size());
         int revokedCount = 0;
+        int skippedCount = 0;
+        int failedCount = 0;
+        int processedCount = 0;
         for (Certificate cert : activeCerts) {
-            if (cert.getPath() == null || cert.getPath().isEmpty()) {
+            if (cert.getPath() == null || cert.getPath().isBlank()) {
+                skippedCount++;
                 logger.warn("Certificate {} (ID: {}) has no path, skipping CRL check",
                         cert.getSerialNumber(), cert.getId());
                 continue;
             }
-            X509Certificate x509Cert;
-            if (cert.ispfxCertificate()) {
-                String decryptedPassword = passwordCryptoService.decrypt(cert.getPassword());
-                x509Cert = loadX509FromPFX(cert, decryptedPassword);
-            } else {
-                x509Cert = loadX509Certificate(cert);
-            }
-            if (crlService.isRevoked(x509Cert)) {
-                // Mark as revoked in DB
-                certificateService.markAsRevoked(cert.getId(), Instant.now());
-                revokedCount++;
+            try {
+                X509Certificate x509Cert;
+                if (cert.ispfxCertificate()) {
+                    String decryptedPassword = passwordCryptoService.decrypt(cert.getPassword());
+                    x509Cert = loadX509FromPFX(cert, decryptedPassword);
+                } else {
+                    x509Cert = loadX509Certificate(cert);
+                }
+                if (x509Cert == null) {
+                    failedCount++;
+                    logger.warn("Failed to load certificate {} (ID: {}) for CRL check",
+                            cert.getSerialNumber(), cert.getId());
+                    continue;
+                }
+                processedCount++;
+                if (crlService.isRevoked(x509Cert)) {
+                    // Mark as revoked in DB
+                    certificateService.markAsRevoked(cert.getId(), Instant.now());
+                    revokedCount++;
+                }
+            } catch (Exception e) {
+                failedCount++;
+                logger.warn("CRL check failed for certificate {} (ID: {}): {}",
+                        cert.getSerialNumber(), cert.getId(), e.getMessage());
+                logger.debug("CRL check failure stack trace", e);
             }
         }
-        logger.info("CRL check completed. {} certificates marked as REVOKED", revokedCount);
+        Instant finishedAt = Instant.now();
+        logger.info("CRL check completed. total={} processed={} revoked={} skipped={} failed={}",
+                activeCerts.size(), processedCount, revokedCount, skippedCount, failedCount);
+        return new CRLCheckRunResponse(startedAt, finishedAt, activeCerts.size(),
+                processedCount, revokedCount, skippedCount, failedCount);
     }
 
     public X509Certificate loadX509Certificate(Certificate cert) {

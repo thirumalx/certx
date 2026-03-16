@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.math.BigInteger;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.security.cert.X509CRLEntry;
@@ -12,6 +13,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.util.InternalException;
 import org.bouncycastle.asn1.ASN1IA5String;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -62,9 +64,27 @@ public class CRLService {
                 }
             } catch (Exception e) {
                 logger.warn("Failed to check CRL at {}: {}", url, e.getMessage());
+                throw new InternalException("Failed to check CRL at " + url + ": " + e.getMessage());
             }
         }
         return false;
+    }
+
+    /**
+     * Parses a certificate serial number from a string that may be decimal or hexadecimal.
+     * Hex format is detected by a 0x prefix or the presence of A-F characters.
+     */
+    static BigInteger parseSerialNumber(String serial) {
+        if (serial == null || serial.isBlank()) {
+            throw new IllegalArgumentException("Serial number must not be blank");
+        }
+        String trimmed = serial.trim();
+        boolean isHex = trimmed.startsWith("0x") || trimmed.matches("(?i).*[a-f].*");
+        if (isHex) {
+            String hex = trimmed.replaceFirst("(?i)^0x", "");
+            return new BigInteger(hex, 16);
+        }
+        return new BigInteger(trimmed, 10);
     }
 
     private boolean checkCRL(X509Certificate cert, String url) throws Exception {
@@ -83,6 +103,8 @@ public class CRLService {
         X509CRL crl = (X509CRL) cf.generateCRL(response.body());
 
         X509CRLEntry entry = crl.getRevokedCertificate(cert.getSerialNumber());
+        // To simulate testing with a known revoked certificate, you can use a hardcoded serial number:
+        //X509CRLEntry entry = crl.getRevokedCertificate(parseSerialNumber("166f3dfbb5"));
         if (entry != null) {
             logger.info("Certificate {} is REVOKED in CRL at {}", cert.getSerialNumber(), url);
             return true;
@@ -94,6 +116,7 @@ public class CRLService {
      * Extracts CRL Distribution Points (URLs) from an X509 certificate.
      */
     public List<String> getCRLDistributionPoints(X509Certificate cert) {
+        logger.debug("Extracting CRL distribution points for certificate: {}", cert.getSerialNumber());
         List<String> crlUrls = new ArrayList<>();
         byte[] crldpExtensionValue = cert.getExtensionValue(Extension.cRLDistributionPoints.getId());
         if (crldpExtensionValue == null) {
@@ -124,6 +147,7 @@ public class CRLService {
         } catch (Exception e) {
             logger.error("Error extracting CRL distribution points: {}", e.getMessage());
         }
+        logger.debug("CRL Urls extracted: {}", crlUrls);
         return crlUrls;
     }
 }

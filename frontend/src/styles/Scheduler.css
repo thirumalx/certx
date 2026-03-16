@@ -1,0 +1,168 @@
+.scheduler-page {
+  min-height: calc(100vh - 60px);
+  background: #f5f7fa;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.scheduler-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  background: white;
+  padding: 20px 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.scheduler-header h1 {
+  margin: 0 0 6px 0;
+  font-size: 24px;
+  color: #1f2937;
+}
+
+.scheduler-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.scheduler-run-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
+}
+
+.scheduler-run-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
+}
+
+.scheduler-run-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.scheduler-info-card {
+  background: linear-gradient(120deg, #ffffff 0%, #f3f7ff 100%);
+  padding: 20px 24px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.scheduler-info-card h3 {
+  margin: 0 0 10px 0;
+  color: #111827;
+  font-size: 18px;
+}
+
+.scheduler-info-card p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.scheduler-results {
+  background: white;
+  padding: 20px 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.results-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #111827;
+}
+
+.results-range {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.result-card {
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.result-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.result-label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.alert {
+  padding: 14px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  border-left: 4px solid;
+}
+
+.alert-error {
+  background-color: #fde8e8;
+  color: #9b1c1c;
+  border-left-color: #f5c6cb;
+  border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 768px) {
+  .scheduler-page {
+    padding: 16px;
+  }
+
+  .scheduler-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .scheduler-run-btn {
+    width: 100%;
+  }
+
+  .results-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -189,6 +189,14 @@ export function CertificateManagement() {
                                     Expired
                                 </button>
                             </li>
+                            <li key="REVOKED">
+                                <button
+                                    className={`filter-btn ${activeFilter === 'REVOKED' ? 'active' : ''}`}
+                                    onClick={() => setActiveFilter('REVOKED')}
+                                >
+                                    Revoked
+                                </button>
+                            </li>
                             <li key="DELETED">
                                 <button
                                     className={`filter-btn ${activeFilter === 'DELETED' ? 'active' : ''}`}
@@ -271,9 +279,13 @@ export function CertificateManagement() {
                                 <tbody>
                                     {filtered.length > 0 ? (
                                         filtered.map((cert) => {
-                                            const isRevoked = !!cert.revokedOn || cert.status === '0';
-                                            const isExpired = cert.notAfter ? new Date(cert.notAfter) < new Date() : false;
-                                            const statusClass = isRevoked ? 'cert-deleted' : (isExpired ? 'cert-expired' : 'cert-active');
+                                            const statusValue = (cert.status ?? '').toString().toUpperCase();
+                                            const isDeleted = statusValue === '0' || statusValue === 'DELETED';
+                                            const isRevoked = !isDeleted && (!!cert.revokedOn || statusValue === '2' || statusValue === 'REVOKED');
+                                            const isExpired = !isDeleted && !isRevoked && (cert.notAfter ? new Date(cert.notAfter) < new Date() : false);
+                                            const statusClass = isDeleted
+                                                ? 'cert-deleted'
+                                                : (isRevoked ? 'cert-revoked' : (isExpired ? 'cert-expired' : 'cert-active'));
 
                                             return (
                                                 <React.Fragment key={cert.id}>
@@ -298,7 +310,7 @@ export function CertificateManagement() {
                                                             <span
                                                                 className={`cert-badge ${statusClass}`}
                                                             >
-                                                                {isRevoked ? 'Deleted' : (isExpired ? 'Expired' : 'Active')}
+                                                                {isDeleted ? 'Deleted' : (isRevoked ? 'Revoked' : (isExpired ? 'Expired' : 'Active'))}
                                                             </span>
                                                         </td>
                                                         <td>
@@ -317,7 +329,7 @@ export function CertificateManagement() {
                                                             >
                                                                 View
                                                             </button>
-                                                            {!isRevoked && (
+                                                            {!isRevoked && !isDeleted && (
                                                                 <>
                                                                     <button
                                                                         className="btn btn-sm btn-info"
@@ -446,7 +458,12 @@ export function CertificateManagement() {
                                 setError(null);
                             }}
                             loading={formLoading}
-                            readOnly={!!editingCert && (!!editingCert.revokedOn || editingCert.status === '0')}
+                            readOnly={!!editingCert
+                                && (!!editingCert.revokedOn
+                                    || editingCert.status === '0'
+                                    || editingCert.status === '2'
+                                    || (editingCert.status ?? '').toString().toUpperCase() === 'DELETED'
+                                    || (editingCert.status ?? '').toString().toUpperCase() === 'REVOKED')}
                         />
                     )}
                 </main>

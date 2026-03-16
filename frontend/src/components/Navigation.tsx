@@ -27,6 +27,14 @@ export function Navigation() {
               Applications
             </Link>
           </li>
+          <li className="nav-item">
+            <Link
+              to="/scheduler"
+              className={`nav-link ${location.pathname === '/scheduler' ? 'active' : ''}`}
+            >
+              Scheduler
+            </Link>
+          </li>
         </ul>
       </div>
     </nav>

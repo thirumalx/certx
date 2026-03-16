@@ -31,6 +31,7 @@ import io.github.thirumalx.dto.CertificateValidityResponse;
 import io.github.thirumalx.dto.Client;
 import io.github.thirumalx.dto.PageRequest;
 import io.github.thirumalx.dto.PageResponse;
+import io.github.thirumalx.exception.DuplicateKeyException;
 import io.github.thirumalx.exception.ResourceNotFoundException;
 import io.github.thirumalx.model.Anchor;
 import io.github.thirumalx.model.Attribute;
@@ -115,6 +116,19 @@ public class CertificateService {
     Optional<Client> clientOptional = clientViewDao.findNowById(clientId);
     if (clientOptional.isEmpty()) {
       throw new ResourceNotFoundException("Client with ID " + clientId + " not found");
+    }
+
+    String normalizedSerial = normalizeText(certificate.getSerialNumber());
+    certificate.setSerialNumber(normalizedSerial);
+    if (normalizedSerial != null) {
+      Optional<Certificate> existing = certificateViewDao.findNowBySerialNumber(normalizedSerial, applicationId,
+          clientId);
+      if (existing.isPresent()) {
+        Certificate found = existing.get();
+        throw new DuplicateKeyException(
+            "Certificate with serial number " + normalizedSerial
+                + " already exists for this application and client (status: " + found.getStatus() + ")");
+      }
     }
 
     // Anchor
