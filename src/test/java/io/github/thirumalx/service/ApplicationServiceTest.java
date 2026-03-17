@@ -152,7 +152,7 @@ class ApplicationServiceTest {
                 when(viewDao.listNow(Knot.ACTIVE, 0, 5)).thenReturn(apps);
                 when(viewDao.countNow(Knot.ACTIVE)).thenReturn(10L);
 
-                PageResponse<Application> response = service.listApplication(pageRequest);
+                PageResponse<Application> response = service.listApplication(pageRequest, "ACTIVE");
 
                 assertThat(response.page()).isEqualTo(0);
                 assertThat(response.size()).isEqualTo(5);
