@@ -65,12 +65,13 @@ export const applicationService = {
   },
 
   /**
-   * List all applications with pagination
+   * List all applications with pagination and optional status filter
    */
-  listApplications: async (pageNo: number = 0, pageSize: number = 10): Promise<PageResponse<Application>> => {
+  listApplications: async (pageNo: number = 0, pageSize: number = 10, status: string = 'ALL'): Promise<PageResponse<Application>> => {
     const params = new URLSearchParams({
       page: pageNo.toString(),
       size: pageSize.toString(),
+      status: status,
     });
 
     const response = await fetch(`${API_BASE_URL}?${params}`);

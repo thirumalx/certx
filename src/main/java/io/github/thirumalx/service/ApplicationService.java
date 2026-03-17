@@ -131,11 +131,19 @@ public class ApplicationService {
         return applicationOptional.get();
     }
 
-    public PageResponse<Application> listApplication(PageRequest pageRequest) {
-        logger.debug("Listing applications for page {} with size {}", pageRequest.page(), pageRequest.size());
-        List<Application> applications = applicationViewDao.listNow(Knot.ACTIVE, pageRequest.page(),
+    public PageResponse<Application> listApplication(PageRequest pageRequest, String statusString) {
+        logger.debug("Listing applications for page {} with size {} and status {}", pageRequest.page(), pageRequest.size(), statusString);
+        Long status = Knot.ACTIVE;
+        if ("DELETED".equalsIgnoreCase(statusString)) {
+            status = Knot.DELETED;
+        } else if ("REVOKED".equalsIgnoreCase(statusString)) {
+            status = Knot.REVOKED;
+        } else if ("ALL".equalsIgnoreCase(statusString) || statusString == null || statusString.isBlank()) {
+            status = null;
+        }
+        List<Application> applications = applicationViewDao.listNow(status, pageRequest.page(),
                 pageRequest.size());
-        long totalElements = applicationViewDao.countNow(Knot.ACTIVE);
+        long totalElements = applicationViewDao.countNow(status);
         int totalPages = (int) Math.ceil((double) totalElements / pageRequest.size());
         return new PageResponse<>(pageRequest.page(), pageRequest.size(), applications, totalElements, totalPages);
     }

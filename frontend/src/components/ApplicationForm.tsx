@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { type Application } from '../services/applicationService';
 import '../styles/ApplicationForm.css';
 
@@ -17,11 +17,20 @@ export function ApplicationForm({
   loading = false,
   errorMessage = null,
 }: ApplicationFormProps) {
-  const [formData, setFormData] = useState<Application>({
-    applicationName: '',
-    uniqueId: '',
-    status: 'ACTIVE',
-  });
+  const [formData, setFormData] = useState<Application>(
+    application || {
+      applicationName: '',
+      uniqueId: '',
+      status: 'ACTIVE',
+    }
+  );
+
+  useEffect(() => {
+    if (application) {
+      setFormData(application);
+    }
+  }, [application]);
+
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -36,9 +45,9 @@ export function ApplicationForm({
       newErrors.uniqueId = 'Unique ID is required';
     }
 
-    if (!formData.status.trim()) {
-      newErrors.status = 'Status is required';
-    }
+    // if (!formData.status.trim()) {
+    //   newErrors.status = 'Status is required';
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -112,7 +121,7 @@ export function ApplicationForm({
             )}
           </div>
 
-          <div className="form-group">
+          {/* <div className="form-group">
             <label htmlFor="status">Status *</label>
             <select
               id="status"
@@ -130,7 +139,7 @@ export function ApplicationForm({
             {errors.status && (
               <span className="error-message">{errors.status}</span>
             )}
-          </div>
+          </div> */}
 
           <div className="form-actions">
             <button

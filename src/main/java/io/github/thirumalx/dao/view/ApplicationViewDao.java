@@ -47,15 +47,16 @@ public class ApplicationViewDao extends ViewDao<Application> {
 
     public java.util.List<Application> listNow(Long status, int page, int size) {
         String sql = selectWithCounts(ViewColumns.ApplicationNow.TABLE, "a")
-                + " WHERE a." + ViewColumns.ApplicationNow.STATUS_ID_COL + " = :status"
+                + (status != null ? " WHERE a." + ViewColumns.ApplicationNow.STATUS_ID_COL + " = :status" : "")
                 + " ORDER BY a." + ViewColumns.ApplicationNow.ID
                 + " LIMIT :limit OFFSET :offset";
-        return jdbc.sql(sql)
-                .param("status", status)
+        var query = jdbc.sql(sql)
                 .param("limit", size)
-                .param("offset", page * size)
-                .query(rowMapper())
-                .list();
+                .param("offset", page * size);
+        if (status != null) {
+            query = query.param("status", status);
+        }
+        return query.query(rowMapper()).list();
     }
 
     public long countNow(Long status) {

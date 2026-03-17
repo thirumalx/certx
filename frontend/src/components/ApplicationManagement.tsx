@@ -30,13 +30,14 @@ export function ApplicationManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterStatus>('All');
 
-  const loadApplications = async (page: number = 0) => {
+  const loadApplications = async (page: number = 0, filter: FilterStatus = selectedFilter) => {
     try {
       setLoading(true);
       setError(null);
       const response: PageResponse<Application> = await applicationService.listApplications(
         page,
-        pageSize
+        pageSize,
+        filter.toUpperCase()
       );
       setApplications(response.content);
       setTotalPages(response.totalPages);
@@ -57,8 +58,8 @@ export function ApplicationManagement() {
   };
 
   useEffect(() => {
-    loadApplications(0);
-  }, [pageSize]);
+    loadApplications(0, selectedFilter);
+  }, [pageSize, selectedFilter]);
 
   const handleFormSubmit = async (formData: Application) => {
     try {
@@ -217,7 +218,7 @@ export function ApplicationManagement() {
                       <th>Unique ID</th>
                       <th>Clients</th>
                       <th>Certificates</th>
-                      <th>Status</th>
+                      {/* <th>Status</th> */}
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -235,11 +236,11 @@ export function ApplicationManagement() {
                           <td>{app.uniqueId}</td>
                           <td>{app.clientCount ?? 0}</td>
                           <td>{app.certificateCount ?? 0}</td>
-                          <td>
+                          {/* <td>
                             <span className={`status-badge status-${app.status.toLowerCase()}`}>
                               {app.status}
                             </span>
-                          </td>
+                          </td> */}
                           <td
                             className="actions-cell"
                             onClick={(e) => e.stopPropagation()}
