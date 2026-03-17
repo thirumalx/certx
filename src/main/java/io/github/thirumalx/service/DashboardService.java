@@ -27,20 +27,20 @@ public class DashboardService {
         public DashboardStats getStats() {
                 logger.debug("Fetching dashboard statistics");
 
-                long totalApps = jdbc.sql("SELECT count(*) FROM certx.nAP_Application WHERE " + ViewColumns.ApplicationNow.STATUS_ID_COL + " = :active").param("active", Knot.ACTIVE).query(Long.class).single();
-                long totalClients = jdbc.sql("SELECT count(*) FROM certx.nCL_Client WHERE " + ViewColumns.ClientNow.STATUS_ID_COL + " = :active").param("active", Knot.ACTIVE).query(Long.class).single();
-                long totalCerts = jdbc.sql("SELECT count(*) FROM certx.nCE_Certificate WHERE " + ViewColumns.CertificateNow.STATUS_ID_COL + " = :active").param("active", Knot.ACTIVE).query(Long.class).single();
+                long totalApps = jdbc.sql("SELECT count(*) FROM certx.nAP_Application WHERE " + ViewColumns.ApplicationNow.STATUS_ID_COL + " <> :deleted").param("deleted", Knot.DELETED).query(Long.class).single();
+                long totalClients = jdbc.sql("SELECT count(*) FROM certx.nCL_Client WHERE " + ViewColumns.ClientNow.STATUS_ID_COL + " <> :deleted").param("deleted", Knot.DELETED).query(Long.class).single();
+                long totalCerts = jdbc.sql("SELECT count(*) FROM certx.nCE_Certificate WHERE " + ViewColumns.CertificateNow.STATUS_ID_COL + " <> :deleted").param("deleted", Knot.DELETED).query(Long.class).single();
 
                 // Status Distribution
                 List<DashboardStats.StatusCount> statusDistribution = jdbc.sql(
                                 "SELECT CASE " +
-                                                "WHEN " + ViewColumns.CertificateNow.STATUS_ID_COL
-                                                + " = :deleted THEN 'Deleted' " +
-                                                "WHEN " + ViewColumns.CertificateNow.REVOKED_ON + " IS NULL AND "
-                                                + ViewColumns.CertificateNow.NOT_AFTER + " < NOW() THEN 'Expired' " +
+                                                "WHEN " + ViewColumns.CertificateNow.STATUS_ID_COL + " = :deleted THEN 'Deleted' " +
+                                                "WHEN " + ViewColumns.CertificateNow.STATUS_ID_COL + " = :revoked OR " + ViewColumns.CertificateNow.REVOKED_ON + " IS NOT NULL THEN 'Revoked' " +
+                                                "WHEN " + ViewColumns.CertificateNow.NOT_AFTER + " < NOW() THEN 'Expired' " +
                                                 "ELSE 'Active' END as status, count(*) as count " +
                                                 "FROM " + ViewColumns.CertificateNow.TABLE + " GROUP BY status")
                                 .param("deleted", Knot.DELETED)
+                                .param("revoked", Knot.REVOKED)
                                 .query((rs, rowNum) -> new DashboardStats.StatusCount(rs.getString("status"),
                                                 rs.getLong("count")))
                                 .list();
@@ -66,7 +66,10 @@ public class DashboardService {
                                                 +
                                                 "JOIN " + ViewColumns.CertificateNow.TABLE
                                                 + " ce ON tie2.ce_id_belongsto = ce.CE_ID " +
+                                                "WHERE a." + ViewColumns.ApplicationNow.STATUS_ID_COL + " <> :deleted " +
+                                                "AND ce." + ViewColumns.CertificateNow.STATUS_ID_COL + " <> :deleted " +
                                                 "GROUP BY a.AP_ID, a.AP_NAM_Application_Name ORDER BY count DESC LIMIT 5")
+                                .param("deleted", Knot.DELETED)
                                 .query((rs, rowNum) -> new DashboardStats.AppCount(rs.getString("name"),
                                                 rs.getLong("count")))
                                 .list();
