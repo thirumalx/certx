@@ -109,8 +109,7 @@ public class ApplicationService {
             applicationUniqueIdAttributeDao.deleteByApplicationId(id);
             try {
                 Map<String, Object> applicationUniqueIdAttributeId = applicationUniqueIdAttributeDao.insert(
-                        id,
-                        application.getUniqueId(),
+                        id, application.getUniqueId(), Instant.now(),
                         Attribute.METADATA_ACTIVE);
                 logger.info("Added application uniqueId attribute with ID: {}",
                         applicationUniqueIdAttributeId.entrySet().stream().toList());
@@ -132,7 +131,8 @@ public class ApplicationService {
     }
 
     public PageResponse<Application> listApplication(PageRequest pageRequest, String statusString) {
-        logger.debug("Listing applications for page {} with size {} and status {}", pageRequest.page(), pageRequest.size(), statusString);
+        logger.debug("Listing applications for page {} with size {} and status {}", pageRequest.page(),
+                pageRequest.size(), statusString);
         Long status = Knot.ACTIVE;
         if ("DELETED".equalsIgnoreCase(statusString)) {
             status = Knot.DELETED;
