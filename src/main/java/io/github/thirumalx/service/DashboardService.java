@@ -51,7 +51,12 @@ public class DashboardService {
                                                 + ", 'YYYY-MM') as month, count(*) as count " +
                                                 "FROM " + ViewColumns.CertificateNow.TABLE + " " +
                                                 "WHERE " + ViewColumns.CertificateNow.NOT_AFTER + " >= NOW() " +
+                                                "AND " + ViewColumns.CertificateNow.STATUS_ID_COL + " <> :deleted " +
+                                                "AND " + ViewColumns.CertificateNow.STATUS_ID_COL + " <> :revoked " +
+                                                "AND " + ViewColumns.CertificateNow.REVOKED_ON + " IS NULL " +
                                                 "GROUP BY month ORDER BY month LIMIT 6")
+                                .param("deleted", Knot.DELETED)
+                                .param("revoked", Knot.REVOKED)
                                 .query((rs, rowNum) -> new DashboardStats.ExpiryCount(rs.getString("month"),
                                                 rs.getLong("count")))
                                 .list();
