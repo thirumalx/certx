@@ -133,14 +133,7 @@ public class ApplicationService {
     public PageResponse<Application> listApplication(PageRequest pageRequest, String statusString) {
         logger.debug("Listing applications for page {} with size {} and status {}", pageRequest.page(),
                 pageRequest.size(), statusString);
-        Long status = Knot.ACTIVE;
-        if ("DELETED".equalsIgnoreCase(statusString)) {
-            status = Knot.DELETED;
-        } else if ("REVOKED".equalsIgnoreCase(statusString)) {
-            status = Knot.REVOKED;
-        } else if ("ALL".equalsIgnoreCase(statusString) || statusString == null || statusString.isBlank()) {
-            status = null;
-        }
+        Long status = Knot.getIdFromDescription(statusString);
         List<Application> applications = applicationViewDao.listNow(status, pageRequest.page(),
                 pageRequest.size());
         long totalElements = applicationViewDao.countNow(status);

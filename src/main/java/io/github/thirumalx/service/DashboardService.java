@@ -27,9 +27,9 @@ public class DashboardService {
         public DashboardStats getStats() {
                 logger.debug("Fetching dashboard statistics");
 
-                long totalApps = jdbc.sql("SELECT count(*) FROM certx.nAP_Application").query(Long.class).single();
-                long totalClients = jdbc.sql("SELECT count(*) FROM certx.nCL_Client").query(Long.class).single();
-                long totalCerts = jdbc.sql("SELECT count(*) FROM certx.nCE_Certificate").query(Long.class).single();
+                long totalApps = jdbc.sql("SELECT count(*) FROM certx.nAP_Application WHERE " + ViewColumns.ApplicationNow.STATUS_ID_COL + " = :active").param("active", Knot.ACTIVE).query(Long.class).single();
+                long totalClients = jdbc.sql("SELECT count(*) FROM certx.nCL_Client WHERE " + ViewColumns.ClientNow.STATUS_ID_COL + " = :active").param("active", Knot.ACTIVE).query(Long.class).single();
+                long totalCerts = jdbc.sql("SELECT count(*) FROM certx.nCE_Certificate WHERE " + ViewColumns.CertificateNow.STATUS_ID_COL + " = :active").param("active", Knot.ACTIVE).query(Long.class).single();
 
                 // Status Distribution
                 List<DashboardStats.StatusCount> statusDistribution = jdbc.sql(

@@ -260,14 +260,7 @@ public class ClientService {
         logger.debug("Listing clients for the application {} with status {} from page {} with size {}", applicationId,
                 statusString,
                 pageRequest.page(), pageRequest.size());
-        Long status = Knot.ACTIVE;
-        if ("DELETED".equalsIgnoreCase(statusString)) {
-            status = Knot.DELETED;
-        } else if ("REVOKED".equalsIgnoreCase(statusString)) {
-            status = Knot.REVOKED;
-        } else if ("ALL".equalsIgnoreCase(statusString) || statusString == null || statusString.isBlank()) {
-            status = null;
-        }
+        Long status = Knot.getIdFromDescription(statusString);
         List<Client> clients = clientViewDao.listNow(applicationId, status, pageRequest.page(),
                 pageRequest.size());
         long totalElements = clientViewDao.countNow(applicationId, status);

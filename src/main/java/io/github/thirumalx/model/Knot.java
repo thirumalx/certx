@@ -16,4 +16,13 @@ public sealed interface Knot<T> permits SimpleKnot, HistorizedKnot {
     String description();
 
     Long getMetadata();
+
+    static Long getIdFromDescription(String description) {
+        return switch (description) {
+            case "DELETED" -> DELETED;
+            case "ACTIVE" -> ACTIVE;
+            case "REVOKED" -> REVOKED;
+            case null, default -> null;
+        };
+    }
 }
