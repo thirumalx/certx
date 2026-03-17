@@ -1,5 +1,6 @@
 package io.github.thirumalx.dao;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.jdbc.core.RowMapper;
@@ -45,6 +46,12 @@ public abstract class KnotDao<T extends Knot<Long>> {
 		return jdbc.sql("SELECT * FROM " + tableName + " WHERE " + idColumn + " = :id").param("id", id)
 				.query(rowMapper())
 				.optional();
+	}
+	/**
+	 * Here knot name is same as table name
+	 */
+	public List<T> findAll() {
+		return jdbc.sql("SELECT * FROM certx." + tableName).query(rowMapper()).list();
 	}
 
 	protected abstract RowMapper<T> rowMapper();

@@ -90,3 +90,11 @@ src/main/java
 ```shell
 certutil -dump certificate.pfx
 ```
+
+## How to build
+
+To build run the following command
+
+```shell
+mvn clean install -DskipTests=True
+```

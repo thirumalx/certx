@@ -231,6 +231,10 @@ public class ClientService {
             clientUniqueIdAttributeDao.deleteByApplicationId(id);
             clientUniqueIdAttributeDao.insert(id, uniqueId, Attribute.METADATA_ACTIVE);
         }
+        // Update Status
+        if (client.getStatus() != null && !client.getStatus().equals(existingClient.getStatus())) {
+            clientStatusAttributeDao.insert(id, client.getStatus(), Instant.now(), Attribute.METADATA_ACTIVE);
+        }
         return getClient(applicationId, id);
     }
 

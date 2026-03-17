@@ -62,6 +62,11 @@ public class Client {
                 return false;
         } else if (!mobileNumber.equals(other.mobileNumber))
             return false;
+        if (status == null) {
+            if (other.status != null)
+                return false;
+        } else if (!status.equals(other.status))
+            return false;
         return true;
     }
 
