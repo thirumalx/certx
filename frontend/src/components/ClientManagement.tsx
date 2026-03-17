@@ -9,7 +9,7 @@ import { applicationService } from '../services/applicationService';
 import { ClientForm } from './ClientForm';
 import '../styles/ClientManagement.css';
 
-type FilterStatus = 'All' | 'Active' | 'Inactive' | 'Suspended' | 'Deleted';
+type FilterStatus = 'All' | 'Active' | 'Deleted';
 
 export function ClientManagement() {
     const { applicationId } = useParams<{ applicationId: string }>();
@@ -44,11 +44,11 @@ export function ClientManagement() {
         });
     }, [appId]);
 
-    const loadClients = async (page: number = 0) => {
+    const loadClients = async (page: number = 0, filter: FilterStatus = selectedFilter) => {
         try {
             setLoading(true);
             setError(null);
-            const response: PageResponse<Client> = await clientService.listClients(appId, page, pageSize);
+            const response: PageResponse<Client> = await clientService.listClients(appId, page, pageSize, filter);
             setClients(response.content);
             setTotalPages(response.totalPages);
             setTotalElements(response.totalElements);
@@ -68,7 +68,7 @@ export function ClientManagement() {
 
     useEffect(() => {
         loadClients(0);
-    }, [appId, pageSize]);
+    }, [appId, pageSize, selectedFilter]);
 
     const handleFormSubmit = async (formData: Client) => {
         try {
@@ -136,7 +136,7 @@ export function ClientManagement() {
         return matchesSearch && c.status.toLowerCase() === selectedFilter.toLowerCase();
     });
 
-    const filterOptions: FilterStatus[] = ['All', 'Active', 'Inactive', 'Suspended', 'Deleted'];
+    const filterOptions: FilterStatus[] = ['All', 'Active', 'Deleted'];
 
     return (
         <div className="client-management">
@@ -215,12 +215,12 @@ export function ClientManagement() {
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>UID</th>
+                                            <th>Unique ID</th>
                                             <th>Name</th>
                                             <th>Email</th>
                                             <th>Mobile</th>
                                             <th>Assignees</th>
-                                            <th>Status</th>
+                                            {/* <th>Status</th> */}
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -248,11 +248,11 @@ export function ClientManagement() {
                                                     <td>{client.email ?? '—'}</td>
                                                     <td>{client.mobileNumber ?? '—'}</td>
                                                     <td>{client.assignedUserCount ?? 0}</td>
-                                                    <td>
+                                                    {/* <td>
                                                         <span className={`status-badge status-${client.status.toLowerCase()}`}>
                                                             {client.status}
                                                         </span>
-                                                    </td>
+                                                    </td> */}
                                                     <td className="actions-cell">
                                                         <button
                                                             className="btn btn-sm btn-info"

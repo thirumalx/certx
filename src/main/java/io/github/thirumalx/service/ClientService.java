@@ -256,12 +256,21 @@ public class ClientService {
         return clientViewDao.findNowByUniqueId(normalized);
     }
 
-    public PageResponse<Client> listClient(Long applicationId, PageRequest pageRequest) {
-        logger.debug("Listing clients for the application {} from page {} with size {}", applicationId,
+    public PageResponse<Client> listClient(Long applicationId, PageRequest pageRequest, String statusString) {
+        logger.debug("Listing clients for the application {} with status {} from page {} with size {}", applicationId,
+                statusString,
                 pageRequest.page(), pageRequest.size());
-        List<Client> clients = clientViewDao.listNow(applicationId, Knot.ACTIVE, pageRequest.page(),
+        Long status = Knot.ACTIVE;
+        if ("DELETED".equalsIgnoreCase(statusString)) {
+            status = Knot.DELETED;
+        } else if ("REVOKED".equalsIgnoreCase(statusString)) {
+            status = Knot.REVOKED;
+        } else if ("ALL".equalsIgnoreCase(statusString) || statusString == null || statusString.isBlank()) {
+            status = null;
+        }
+        List<Client> clients = clientViewDao.listNow(applicationId, status, pageRequest.page(),
                 pageRequest.size());
-        long totalElements = clientViewDao.countNow(applicationId, Knot.ACTIVE);
+        long totalElements = clientViewDao.countNow(applicationId, status);
         int totalPages = (int) Math.ceil((double) totalElements / pageRequest.size());
         return new PageResponse<>(pageRequest.page(), pageRequest.size(), clients, totalElements, totalPages);
     }

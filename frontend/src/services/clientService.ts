@@ -73,11 +73,13 @@ export const clientService = {
     listClients: async (
         applicationId: number,
         pageNo: number = 0,
-        pageSize: number = 10
+        pageSize: number = 10,
+        status: string = 'ALL'
     ): Promise<PageResponse<Client>> => {
         const params = new URLSearchParams({
             page: pageNo.toString(),
             size: pageSize.toString(),
+            status: status,
         });
         const response = await fetch(`${baseUrl(applicationId)}?${params}`);
         if (!response.ok) throw new Error('Failed to fetch clients');

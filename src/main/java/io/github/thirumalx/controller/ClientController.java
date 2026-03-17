@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -52,7 +53,7 @@ public class ClientController {
     @PutMapping("/{id}")
     public ResponseEntity<Client> updateClient(@PathVariable Long applicationId, @PathVariable Long id,
             @Valid @RequestBody Client client) {
-        Client updatedClient = clientService.update(applicationId, id, client); 
+        Client updatedClient = clientService.update(applicationId, id, client);
         return ResponseEntity.ok(updatedClient);
     }
 
@@ -70,8 +71,9 @@ public class ClientController {
     }
 
     @GetMapping()
-    public ResponseEntity<PageResponse<Client>> listClient(@PathVariable Long applicationId, @Valid PageRequest pageRequest) {
-        return ResponseEntity.ok(clientService.listClient(applicationId, pageRequest));
+    public ResponseEntity<PageResponse<Client>> listClient(@PathVariable Long applicationId,
+            @Valid PageRequest pageRequest, @RequestParam(required = false, defaultValue = "ALL") String status) {
+        return ResponseEntity.ok(clientService.listClient(applicationId, pageRequest, status));
     }
 
     @DeleteMapping("/{id}")

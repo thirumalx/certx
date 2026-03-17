@@ -152,7 +152,7 @@ export function ClientForm({
                         />
                     </div>
 
-                    <div className="form-group">
+                    {/* <div className="form-group">
                         <label htmlFor="status">Status *</label>
                         <select
                             id="status"
@@ -167,7 +167,7 @@ export function ClientForm({
                             <option value="SUSPENDED">SUSPENDED</option>
                         </select>
                         {errors.status && <span className="error-message">{errors.status}</span>}
-                    </div>
+                    </div> */}
 
                     <div className="form-actions">
                         <button type="submit" className="btn btn-primary" disabled={loading}>

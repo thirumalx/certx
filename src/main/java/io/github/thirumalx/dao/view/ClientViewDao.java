@@ -38,28 +38,31 @@ public class ClientViewDao extends ViewDao<Client> {
         String sql = selectWithAssignedUser() +
                 " JOIN " + TieColumns.ApplicationClientServedby.TABLE + " t ON v." + ViewColumns.ClientNow.ID
                 + " = t." + TieColumns.ApplicationClientServedby.ANCHOR2 + " " +
-                "WHERE t." + TieColumns.ApplicationClientServedby.ANCHOR1 + " = :applicationId AND v."
-                + ViewColumns.ClientNow.STATUS_ID_COL + " = :status " +
-                "ORDER BY v." + ViewColumns.ClientNow.ID + " LIMIT :limit OFFSET :offset";
-        return jdbc.sql(sql)
+                "WHERE t." + TieColumns.ApplicationClientServedby.ANCHOR1 + " = :applicationId" +
+                (status != null ? " AND v." + ViewColumns.ClientNow.STATUS_ID_COL + " = :status " : "") +
+                " ORDER BY v." + ViewColumns.ClientNow.ID + " LIMIT :limit OFFSET :offset";
+        var query = jdbc.sql(sql)
                 .param("applicationId", applicationId)
-                .param("status", status)
                 .param("limit", size)
-                .param("offset", page * size)
-                .query(rowMapper())
-                .list();
+                .param("offset", page * size);
+        if (status != null) {
+            query = query.param("status", status);
+        }
+        return query.query(rowMapper()).list();
     }
 
     public long countNow(Long applicationId, Long status) {
         String sql = "SELECT count(*) FROM " + ViewColumns.ClientNow.TABLE + " v " +
                 "JOIN " + TieColumns.ApplicationClientServedby.TABLE + " t ON v." + ViewColumns.ClientNow.ID + " = t."
                 + TieColumns.ApplicationClientServedby.ANCHOR2 + " " +
-                "WHERE t." + TieColumns.ApplicationClientServedby.ANCHOR1 + " = :applicationId AND v."
-                + ViewColumns.ClientNow.STATUS_ID_COL + " = :status";
-        return jdbc.sql(sql)
-                .param("applicationId", applicationId)
-                .param("status", status)
-                .query(Long.class)
+                "WHERE t." + TieColumns.ApplicationClientServedby.ANCHOR1 + " = :applicationId" +
+                (status != null ? " AND v." + ViewColumns.ClientNow.STATUS_ID_COL + " = :status " : "");
+        var query = jdbc.sql(sql)
+                .param("applicationId", applicationId);
+        if (status != null) {
+            query = query.param("status", status);
+        }
+        return query.query(Long.class)
                 .single();
     }
 
