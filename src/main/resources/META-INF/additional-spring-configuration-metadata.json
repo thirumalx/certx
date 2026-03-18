@@ -1,0 +1,12 @@
+{"properties": [
+  {
+    "name": "mail.cc",
+    "type": "java.lang.String",
+    "description": "A description for 'mail.cc'"
+  },
+  {
+    "name": "certx.crypto.password-key",
+    "type": "java.lang.String",
+    "description": "A description for 'certx.crypto.password-key'"
+  }
+]}

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -15,6 +16,7 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 /**
@@ -29,6 +31,9 @@ public class MailService {
 
     private final JavaMailSender mailSender;
     private final Configuration freemarkerConfig;
+
+    @Value("${mail.cc}")
+    private String cc;
 
     public MailService(JavaMailSender mailSender, Configuration freemarkerConfig) {
         this.mailSender = mailSender;
@@ -47,6 +52,7 @@ public class MailService {
             String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
 
             helper.setTo(to);
+            helper.setCc(cc);
             helper.setSubject(subject);
             helper.setText(html, true);
 
