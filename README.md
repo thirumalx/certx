@@ -98,3 +98,73 @@ To build run the following command
 ```shell
 mvn clean install -DskipTests=True
 ```
+
+### Docker
+```
+# First time: copy the template
+cp .env.example .env
+# Edit .env with your real MAIL_USER, MAIL_PASS, MAIL_CC values
+
+# Build and start everything
+docker compose up --build
+```
+
+## How to re-build and start everything
+
+```shell
+docker compose up --build -d
+```
+
+## How to stop and remove everything
+
+```shell
+docker compose down
+```
+
+## How to stop and remove everything and start again
+
+```shell
+docker compose down -v
+```
+
+
+## How to access the application
+
+```shell
+http://localhost:8080
+```
+
+## How to access the database
+
+```shell
+psql -h localhost -p 5432 -U postgres -d certx
+```
+
+## How to access the application logs
+
+```shell
+docker compose logs -f app
+```
+
+## How to access the database logs
+
+```shell
+docker compose logs -f postgres
+```
+
+## How to access the application logs
+
+```shell
+docker compose logs -f app
+```
+
+# Application host volumes
+
+```shell
+/Users:/Users:ro        # macOS home directories (shared by Docker Desktop)
+/home:/home:ro          # Linux home directories
+/opt:/opt:ro            # common Linux install paths
+/tmp:/tmp:ro            # temp files
+```
+
+Before building docker, update the path in the compose.yaml file to point to the correct path on your host machine.

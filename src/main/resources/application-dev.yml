@@ -12,4 +12,4 @@ certx:
     password-key: YvEj6RT6ZqLfRwV7vVvjSkTpHPrxof+SzCjIMEelwBk=
 
 mail:
-  cc: racetortoise@gmail.com
+  cc: ${MAIL_CC:racetortoise@gmail.com}

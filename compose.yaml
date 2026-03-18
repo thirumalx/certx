@@ -1,9 +1,45 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    image: postgres:18
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      POSTGRES_DB: certx
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Thirumal}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./datamodel/model.sql:/docker-entrypoint-initdb.d/01_model.sql:ro
+      - ./datamodel/ddl.sql:/docker-entrypoint-initdb.d/02_ddl.sql:ro
     ports:
-      - '5432'
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d certx"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/certx
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-Thirumal}
+      MAIL_USER: ${MAIL_USER}
+      MAIL_PASS: ${MAIL_PASS}
+      MAIL_CC: ${MAIL_CC}
+    volumes:
+      # Mount common host directories at the same path so certificate file paths
+      # stored in the DB resolve correctly inside the container.
+      - /Users:/Users:ro        # macOS home directories (shared by Docker Desktop)
+      #- /home:/home:ro          # Linux home directories
+      #- /opt:/opt:ro            # common Linux install paths
+      #- /tmp:/tmp:ro            # temp files
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:

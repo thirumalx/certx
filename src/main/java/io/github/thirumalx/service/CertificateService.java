@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -55,6 +56,12 @@ import java.util.Enumeration;
 public class CertificateService {
 
   Logger logger = LoggerFactory.getLogger(CertificateService.class);
+
+  /** Prefix prepended to every certificate path when resolving files.
+   *  Empty by default (local dev). Set via {@code CERTX_HOST_ROOT} env var in Docker
+   *  when host directories are mounted at a different path inside the container. */
+  @Value("${certx.host-root:}")
+  private String hostRoot;
 
   private final ApplicationAnchorDao applicationDao;
   private final ApplicationViewDao applicationViewDao;
@@ -197,8 +204,11 @@ public class CertificateService {
     if (path == null || path.isEmpty()) {
       throw new IllegalArgumentException("Path cannot be empty");
     }
-    File file = new File(path);
-    logger.debug("Validating certificate path: {}", file.getAbsolutePath());
+    // Prepend host-root prefix so paths stored in the DB (absolute host paths) resolve
+    // correctly when the app runs inside Docker with host dirs mounted at a prefix.
+    String resolvedPath = (hostRoot == null || hostRoot.isBlank()) ? path : hostRoot + path;
+    File file = new File(resolvedPath);
+    logger.debug("Validating certificate path: {} (resolved: {})", path, file.getAbsolutePath());
     if (!file.exists()) {
       throw new ResourceNotFoundException("Certificate file not found at " + file.getAbsolutePath());
     }
@@ -208,7 +218,7 @@ public class CertificateService {
         .lastTimeVerifiedOn(LocalDateTime.now())
         .status("ACTIVE");
 
-    try (InputStream is = new FileInputStream(file)) {
+    try (InputStream is = new FileInputStream(file)) { // uses resolvedPath via `file`
       if (path.toLowerCase().endsWith(".pfx") || path.toLowerCase().endsWith(".p12")) {
         logger.debug("Parsing PFX/P12 certificate: {}", path);
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
