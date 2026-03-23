@@ -10,10 +10,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import io.github.thirumalx.dao.view.CertificateViewDao;
 import io.github.thirumalx.dto.Certificate;
 import io.github.thirumalx.dto.Client;
+import io.github.thirumalx.dto.InitializerResponse;
 
 /**
  * @author Thirumal M
@@ -37,9 +39,9 @@ public class IntializerService {
 	}
 
 	/**
-	 * Scans all registered certificate paths for updates every 5 minutes.
+	 * Scans all registered certificate paths for updates every 30 minutes.
 	 */
-	@Scheduled(cron = "0 * * * * *")
+	@Scheduled(cron = "0 0/30 * * * *")
 	public void autoUpdateCertificates() {
 		logger.info("Starting automated certificate update scan...");
 		try {
@@ -47,7 +49,7 @@ public class IntializerService {
 			for (String path : paths) {
 				File file = new File(path);
 				if (file.exists() && file.isFile() && isCertificateFile(file.getName())) {
-					processCertificateFile(file, null, new ArrayList<>());
+					processCertificateFile(file, null, new ArrayList<>(), new Stats());
 				}
 			}
 			logger.debug("Background scan completed.");
@@ -56,27 +58,36 @@ public class IntializerService {
 		}
 	}
 
-	public List<String> insertNewCertificates(String path, Long applicationId) {
+	public InitializerResponse insertNewCertificates(String path, Long applicationId) {
 		logger.info("Initializing certificates from path: {}, Application: {}", path, applicationId);
-		List<String> results = new ArrayList<>();
+		List<String> logs = new ArrayList<>();
+		Stats stats = new Stats();
 		File root = new File(path);
 		if (!root.exists() || !root.isDirectory()) {
 			logger.error("Invalid directory path: {}", path);
-			return results;
+			return new InitializerResponse(logs, 0, 0, 0, 0, 0, 0);
 		}
-		scanDirectory(root, applicationId, results);
-		return results;
+		scanDirectory(root, applicationId, logs, stats);
+		return new InitializerResponse(
+			logs, 
+			stats.created + stats.updated + stats.upToDate + stats.error + stats.skipped,
+			stats.created,
+			stats.updated,
+			stats.upToDate,
+			stats.error,
+			stats.skipped
+		);
 	}
 
-	private void scanDirectory(File directory, Long applicationId, List<String> results) {
+	private void scanDirectory(File directory, Long applicationId, List<String> logs, Stats stats) {
 		File[] files = directory.listFiles();
 		if (files == null)
 			return;
 		for (File file : files) {
 			if (file.isDirectory()) {
-				scanDirectory(file, applicationId, results);
+				scanDirectory(file, applicationId, logs, stats);
 			} else if (isCertificateFile(file.getName())) {
-				processCertificateFile(file, applicationId, results);
+				processCertificateFile(file, applicationId, logs, stats);
 			}
 		}
 	}
@@ -87,7 +98,8 @@ public class IntializerService {
 				|| lower.endsWith(".der") || lower.endsWith(".pem");
 	}
 
-	private void processCertificateFile(File file, Long applicationId, List<String> results) {
+	@Transactional
+	public void processCertificateFile(File file, Long applicationId, List<String> logs, Stats stats) {
 		String absolutePath = file.getAbsolutePath();
 		String filename = file.getName();
 		// Assume client name and unique ID are the same as filename (without extension)
@@ -110,10 +122,12 @@ public class IntializerService {
 					logger.info("Updating existing certificate at {}. New Serial: {}", absolutePath,
 							metadata.getSerialNumber());
 					certificateService.updateCertificateInfo(current.getId(), metadata);
-					results.add("UPDATED: " + absolutePath + " (Serial: " + metadata.getSerialNumber() + ")");
+					logs.add("UPDATED: " + absolutePath + " (Serial: " + metadata.getSerialNumber() + ")");
+					stats.updated++;
 				} else {
 					logger.debug("Certificate at {} is already up to date.", absolutePath);
-					results.add("UP-TO-DATE: " + absolutePath);
+					logs.add("UP-TO-DATE: " + absolutePath);
+					stats.upToDate++;
 				}
 			} else if (applicationId != null) {
 				// New certificate registration
@@ -133,15 +147,26 @@ public class IntializerService {
 				metadata.setPath(absolutePath);
 				certificateService.save(applicationId, savedClient.getId(), metadata);
 
-				results.add("CREATED: " + absolutePath + " (Client: " + clientName + ")");
+				logs.add("CREATED: " + absolutePath + " (Client: " + clientName + ")");
+				stats.created++;
 			} else {
 				// Background scan might find new files but doesn't know which app they belong to
 				logger.debug("Background scan found new file at {} - skipping (no app context)", absolutePath);
+				stats.skipped++;
 			}
 		} catch (Exception e) {
 			logger.error("Error processing certificate file {}: {}", absolutePath, e.getMessage());
-			results.add("ERROR: " + absolutePath + " (" + e.getMessage() + ")");
+			logs.add("ERROR: " + absolutePath + " (" + e.getMessage() + ")");
+			stats.error++;
 		}
+	}
+
+	private static class Stats {
+		int created = 0;
+		int updated = 0;
+		int upToDate = 0;
+		int error = 0;
+		int skipped = 0;
 	}
 
 }

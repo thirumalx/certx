@@ -12,7 +12,7 @@ export function Initializer() {
   const [selectedApp, setSelectedApp] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-  const [results, setResults] = useState<string[]>([]);
+  const [results, setResults] = useState<any>(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/application?page=0&size=100&status=ACTIVE`)
@@ -37,7 +37,7 @@ export function Initializer() {
 
     setLoading(true);
     setMessage(null);
-    setResults([]);
+    setResults(null);
 
     try {
       const response = await fetch(`${API_BASE}/initializer/certificates`, {
@@ -57,7 +57,7 @@ export function Initializer() {
 
       const data = await response.json();
       setResults(data);
-      setMessage({ text: `Processing complete. ${data.length} items handled.`, type: 'success' });
+      setMessage({ text: `Processing complete. ${data.totalProcessed} items handled.`, type: 'success' });
     } catch (err) {
       console.error(err);
       setMessage({ text: 'Error initializing certificates. Please check the path and try again.', type: 'error' });
@@ -115,12 +115,31 @@ export function Initializer() {
           </div>
         )}
 
-        {results.length > 0 && (
+        {results && (
           <div className="results-section">
-            <h3>Processing Results</h3>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <span className="stat-label">Total</span>
+                <span className="stat-value">{results.totalProcessed}</span>
+              </div>
+              <div className="stat-card created">
+                <span className="stat-label">Created</span>
+                <span className="stat-value text-success">{results.created}</span>
+              </div>
+              <div className="stat-card updated">
+                <span className="stat-label">Updated</span>
+                <span className="stat-value text-primary">{results.updated}</span>
+              </div>
+              <div className="stat-card error">
+                <span className="stat-label">Errors</span>
+                <span className="stat-value text-danger">{results.error}</span>
+              </div>
+            </div>
+
+            <h3>Processing Logs</h3>
             <div className="results-list-container">
               <ul className="results-list">
-                {results.map((res, index) => (
+                {results.logs.map((res: string, index: number) => (
                   <li key={index} className={`result-item ${res.startsWith('ERROR') ? 'error' : res.startsWith('UPDATED') ? 'updated' : res.startsWith('CREATED') ? 'created' : 'skip'}`}>
                     {res}
                   </li>
