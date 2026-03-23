@@ -10,6 +10,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -78,18 +79,19 @@ public class CRLCheckScheduler {
     private CRLCheckRunResponse runCrlCheckInternal() {
         Instant startedAt = Instant.now();
         logger.info("Starting CRL check for all ACTIVE certificates");
-        // Fetch all active certificates
         List<Certificate> activeCerts = certificateViewDao.listNow(Knot.ACTIVE, 0, Integer.MAX_VALUE);
         logger.info("Found {} active certificates to check", activeCerts.size());
+        
+        List<CRLCheckRunResponse.CertificateLog> logs = new ArrayList<>();
         int revokedCount = 0;
         int skippedCount = 0;
         int failedCount = 0;
         int processedCount = 0;
+
         for (Certificate cert : activeCerts) {
             if (cert.getPath() == null || cert.getPath().isBlank()) {
                 skippedCount++;
-                logger.warn("Certificate {} (ID: {}) has no path, skipping CRL check",
-                        cert.getSerialNumber(), cert.getId());
+                logs.add(new CRLCheckRunResponse.CertificateLog(cert.getSerialNumber(), "SKIPPED", "No path provided"));
                 continue;
             }
             try {
@@ -100,30 +102,31 @@ public class CRLCheckScheduler {
                 } else {
                     x509Cert = loadX509Certificate(cert);
                 }
+                
                 if (x509Cert == null) {
                     failedCount++;
-                    logger.warn("Failed to load certificate {} (ID: {}) for CRL check",
-                            cert.getSerialNumber(), cert.getId());
+                    logs.add(new CRLCheckRunResponse.CertificateLog(cert.getSerialNumber(), "FAILED", "Could not load certificate from path"));
                     continue;
                 }
+                
                 processedCount++;
                 if (crlService.isRevoked(x509Cert)) {
-                    // Mark as revoked in DB
                     certificateService.markAsRevoked(cert.getId(), Instant.now());
                     revokedCount++;
+                    logs.add(new CRLCheckRunResponse.CertificateLog(cert.getSerialNumber(), "REVOKED", "Certificate found in CRL"));
+                } else {
+                    logs.add(new CRLCheckRunResponse.CertificateLog(cert.getSerialNumber(), "SUCCESS", "Certificate is valid"));
                 }
             } catch (Exception e) {
                 failedCount++;
+                logs.add(new CRLCheckRunResponse.CertificateLog(cert.getSerialNumber(), "FAILED", e.getMessage()));
                 logger.warn("CRL check failed for certificate {} (ID: {}): {}",
                         cert.getSerialNumber(), cert.getId(), e.getMessage());
-                logger.debug("CRL check failure stack trace", e);
             }
         }
         Instant finishedAt = Instant.now();
-        logger.info("CRL check completed. total={} processed={} revoked={} skipped={} failed={}",
-                activeCerts.size(), processedCount, revokedCount, skippedCount, failedCount);
         return new CRLCheckRunResponse(startedAt, finishedAt, activeCerts.size(),
-                processedCount, revokedCount, skippedCount, failedCount);
+                processedCount, revokedCount, skippedCount, failedCount, logs);
     }
 
     public X509Certificate loadX509Certificate(Certificate cert) {

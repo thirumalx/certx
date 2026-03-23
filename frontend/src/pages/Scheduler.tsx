@@ -106,8 +106,11 @@ export function Scheduler() {
               <thead>
                 <tr>
                   <th>Category</th>
-                  <th>Cert ID</th>
-                  <th>Client ID</th>
+                  <th>Serial Number</th>
+                  <th>Client Name</th>
+                  <th>Application</th>
+                  <th>Email</th>
+                  <th>Phone</th>
                   <th>Expiry</th>
                   <th>Revoked</th>
                 </tr>
@@ -116,8 +119,11 @@ export function Scheduler() {
                 {reportData.items.map((item, idx) => (
                   <tr key={idx}>
                     <td><span className={`badge badge-${item.category.toLowerCase().replace(' ', '-')}`}>{item.category}</span></td>
-                    <td>{item.certificateId}</td>
-                    <td>{item.clientId || '-'}</td>
+                    <td>{item.serialNumber}</td>
+                    <td>{item.clientName || '-'}</td>
+                    <td>{item.applicationName || '-'}</td>
+                    <td>{item.clientEmail || '-'}</td>
+                    <td>{item.clientPhone || '-'}</td>
                     <td>{item.expiryDate ? formatTimestamp(item.expiryDate) : '-'}</td>
                     <td>{item.revokedOn ? formatTimestamp(item.revokedOn) : '-'}</td>
                   </tr>
@@ -159,6 +165,21 @@ export function Scheduler() {
               <span className="result-label">Failed</span>
             </div>
           </div>
+
+          {result.logs && result.logs.length > 0 && (
+            <div className="crl-logs-section">
+              <h4>Execution Logs</h4>
+              <div className="crl-logs-list">
+                {result.logs.map((log, idx) => (
+                  <div key={idx} className={`crl-log-item status-${log.status.toLowerCase()}`}>
+                    <span className="log-serial">{log.serialNumber}</span>
+                    <span className={`log-status badge badge-${log.status.toLowerCase()}`}>{log.status}</span>
+                    <span className="log-message">{log.message}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
       )}
     </div>

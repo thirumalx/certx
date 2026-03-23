@@ -98,7 +98,7 @@ public class ExpiryNotificationScheduler {
 
         // 1. Expired Today
         reportItems.addAll(fetchCerts("Expired Today",
-                "nce.ce_naf_certificate_notafter::date = CURRENT_DATE"));
+                "nce.ce_naf_certificate_notafter::date = CURRENT_DATE AND nce.ce_ron_certificate_revokedon IS NULL"));
 
         // 2. Revoked Today
         reportItems.addAll(fetchCerts("Revoked Today",
@@ -107,7 +107,7 @@ public class ExpiryNotificationScheduler {
         // 3. Expiring in next n days (excluding today)
         reportItems.addAll(fetchCerts("Expiring Soon",
                 "nce.ce_naf_certificate_notafter BETWEEN CURRENT_DATE + INTERVAL '1 day' AND CURRENT_DATE + INTERVAL '"
-                        + generateForNextNDays + " days'"));
+                        + generateForNextNDays + " days' AND nce.ce_ron_certificate_revokedon IS NULL"));
 
         if (reportItems.isEmpty()) {
             logger.info("No items to include in report. Skipping email.");
@@ -129,15 +129,24 @@ public class ExpiryNotificationScheduler {
 
     private List<CertificateReportItem> fetchCerts(String category, String condition) {
         String sql = """
-                SELECT nce.ce_id, tie.cl_id_owns, nce.ce_naf_certificate_notafter, nce.ce_ron_certificate_revokedon
+                SELECT nce.ce_id, nce.ce_sno_certificate_serialnumber, 
+                       cl.cl_nam_client_name, cl.cl_eid_client_email, cl.cl_mno_client_mobilenumber,
+                       ap.ap_nam_application_name,
+                       nce.ce_naf_certificate_notafter, nce.ce_ron_certificate_revokedon
                 FROM certx.nce_certificate nce
-                JOIN certx.ce_belongsto_cl_owns tie ON tie.ce_id_belongsto = nce.ce_id
+                LEFT JOIN certx.ce_belongsto_cl_owns tie ON tie.ce_id_belongsto = nce.ce_id
+                LEFT JOIN certx.ncl_client cl ON cl.cl_id = tie.cl_id_owns
+                LEFT JOIN certx.ap_uses_ce_isusedby apce ON apce.ce_id_isusedby = nce.ce_id
+                LEFT JOIN certx.nap_application ap ON ap.ap_id = apce.ap_id_uses
                 WHERE\s""" + condition;
         return jdbc.sql(sql)
                 .query((rs, rowNum) -> CertificateReportItem.builder()
                         .category(category)
-                        .certificateId(rs.getLong("ce_id"))
-                        .clientId(rs.getObject("cl_id_owns") != null ? rs.getLong("cl_id_owns") : null)
+                        .serialNumber(rs.getString("ce_sno_certificate_serialnumber"))
+                        .clientName(rs.getString("cl_nam_client_name"))
+                        .clientEmail(rs.getString("cl_eid_client_email"))
+                        .clientPhone(rs.getString("cl_mno_client_mobilenumber"))
+                        .applicationName(rs.getString("ap_nam_application_name"))
                         .expiryDate(rs.getTimestamp("ce_naf_certificate_notafter") != null
                                 ? rs.getTimestamp("ce_naf_certificate_notafter").toLocalDateTime()
                                 : null)

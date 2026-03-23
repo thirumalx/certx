@@ -8,12 +8,22 @@ export interface CrlCheckRunResponse {
   revoked: number;
   skipped: number;
   failed: number;
+  logs: CertificateLog[];
+}
+
+export interface CertificateLog {
+  serialNumber: string;
+  status: string;
+  message: string;
 }
 
 export interface CertificateReportItem {
   category: string;
-  certificateId: number;
-  clientId: number | null;
+  serialNumber: string;
+  clientName: string | null;
+  applicationName: string | null;
+  clientEmail: string | null;
+  clientPhone: string | null;
   expiryDate: string | null;
   revokedOn: string | null;
 }

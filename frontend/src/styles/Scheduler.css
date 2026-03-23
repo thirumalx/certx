@@ -281,8 +281,75 @@
   color: #9a3412;
 }
 
-.badge-expiring-soon {
-  background: #ecfeff;
-  color: #083344;
+.badge-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-revoked {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.crl-logs-section {
+  margin-top: 30px;
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.crl-logs-section h4 {
+  margin: 0 0 16px 0;
+  color: #111827;
+  font-size: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.crl-logs-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crl-log-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 12px;
+  border-left: 4px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.crl-log-item.status-success { border-left-color: #10b981; }
+.crl-log-item.status-revoked { border-left-color: #ef4444; }
+.crl-log-item.status-failed { border-left-color: #f87171; }
+.crl-log-item.status-skipped { border-left-color: #9ca3af; }
+
+.log-serial {
+  font-weight: 600;
+  color: #374151;
+  min-width: 150px;
+  font-family: monospace;
+}
+
+.log-status {
+  min-width: 80px;
+  text-align: center;
+}
+
+.log-message {
+  color: #6b7280;
+  flex: 1;
 }
 

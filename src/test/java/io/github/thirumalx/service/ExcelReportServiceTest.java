@@ -19,14 +19,20 @@ class ExcelReportServiceTest {
         List<CertificateReportItem> items = List.of(
                 CertificateReportItem.builder()
                         .category("Expired Today")
-                        .certificateId(12L)
-                        .clientId(2L)
+                        .serialNumber("12345")
+                        .clientName("Test Client")
+                        .applicationName("Test App")
+                        .clientEmail("[EMAIL_ADDRESS]")
+                        .clientPhone("1234567890")
                         .expiryDate(LocalDateTime.now())
                         .build(),
                 CertificateReportItem.builder()
                         .category("Revoked Today")
-                        .certificateId(6L)
-                        .clientId(2L)
+                        .serialNumber("9879879")
+                        .clientName("Test Client")
+                        .applicationName("Test App")
+                        .clientEmail("[EMAIL_ADDRESS]")
+                        .clientPhone("1234567890")
                         .revokedOn(LocalDateTime.now())
                         .build());
 

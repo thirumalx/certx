@@ -33,8 +33,12 @@ public class ExcelReportService {
     @Builder
     public record CertificateReportItem(
             String category,
-            Long certificateId,
+            String serialNumber,
             Long clientId,
+            String clientName, // OwnerName
+            String applicationName,
+            String clientEmail,
+            String clientPhone,
             LocalDateTime expiryDate,
             LocalDateTime revokedOn) {
     }
@@ -54,7 +58,7 @@ public class ExcelReportService {
 
             // Create Header Row
             Row headerRow = sheet.createRow(0);
-            String[] columns = { "Category", "Certificate ID", "Client ID", "Expiry Date", "Revoked On" };
+            String[] columns = { "Category", "Serial Number", "Client Name", "Application", "Email", "Phone", "Expiry Date", "Revoked On" };
             for (int i = 0; i < columns.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(columns[i]);
@@ -66,10 +70,13 @@ public class ExcelReportService {
             for (CertificateReportItem item : items) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(item.category());
-                row.createCell(1).setCellValue(item.certificateId());
-                row.createCell(2).setCellValue(item.clientId() == null ? "" : item.clientId().toString());
-                row.createCell(3).setCellValue(item.expiryDate() == null ? "" : item.expiryDate().toString());
-                row.createCell(4).setCellValue(item.revokedOn() == null ? "" : item.revokedOn().toString());
+                row.createCell(1).setCellValue(item.serialNumber());
+                row.createCell(2).setCellValue(item.clientName());
+                row.createCell(3).setCellValue(item.applicationName());
+                row.createCell(4).setCellValue(item.clientEmail());
+                row.createCell(5).setCellValue(item.clientPhone());
+                row.createCell(6).setCellValue(item.expiryDate() == null ? "" : item.expiryDate().toString());
+                row.createCell(7).setCellValue(item.revokedOn() == null ? "" : item.revokedOn().toString());
             }
 
             // Auto-size columns

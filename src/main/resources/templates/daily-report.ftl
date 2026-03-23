@@ -16,8 +16,11 @@
         <thead style="background-color: #f2f2f2;">
             <tr>
                 <th>Category</th>
-                <th>Certificate ID</th>
-                <th>Client ID</th>
+                <th>Serial Number</th>
+                <th>Client Name</th>
+                <th>Application</th>
+                <th>Email</th>
+                <th>Phone</th>
                 <th>Expiry Date</th>
                 <th>Revoked On</th>
             </tr>
@@ -26,8 +29,11 @@
             <#list items as item>
             <tr>
                 <td>${item.category()}</td>
-                <td>${item.certificateId()}</td>
-                <td>${item.clientId()!""}</td>
+                <td>${item.serialNumber()!""}</td>
+                <td>${item.clientName()!""}</td>
+                <td>${item.applicationName()!""}</td>
+                <td>${item.clientEmail()!""}</td>
+                <td>${item.clientPhone()!""}</td>
                 <td>${item.expiryDate()!""}</td>
                 <td>${item.revokedOn()!""}</td>
             </tr>

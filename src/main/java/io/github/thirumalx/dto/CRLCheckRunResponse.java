@@ -1,6 +1,7 @@
 package io.github.thirumalx.dto;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Summary of a CRL check run.
@@ -12,5 +13,9 @@ public record CRLCheckRunResponse(
         int processed,
         int revoked,
         int skipped,
-        int failed) {
+        int failed,
+        List<CertificateLog> logs) {
+
+    public record CertificateLog(String serialNumber, String status, String message) {
+    }
 }
