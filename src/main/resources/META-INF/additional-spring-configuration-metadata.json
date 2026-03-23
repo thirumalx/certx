@@ -8,5 +8,15 @@
     "name": "certx.crypto.password-key",
     "type": "java.lang.String",
     "description": "A description for 'certx.crypto.password-key'"
+  },
+  {
+    "name": "mail.report-to",
+    "type": "java.lang.String",
+    "description": "A description for 'mail.report-to'"
+  },
+  {
+    "name": "report.generate-for-next-n-days",
+    "type": "java.lang.String",
+    "description": "A description for 'report.generate-for-next-n-days'"
   }
 ]}

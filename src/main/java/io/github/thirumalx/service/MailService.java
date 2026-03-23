@@ -6,6 +6,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -42,7 +44,12 @@ public class MailService {
 
     @Async
     public void sendEmail(String to, String subject, String templateName, Map<String, Object> model) {
-        logger.info("Sending email to: {} with subject: {}", to, subject);
+        sendEmail(to, subject, templateName, model, null, null);
+    }
+
+    @Async
+    public void sendEmail(String to, String subject, String templateName, Map<String, Object> model, String attachmentName, byte[] attachment) {
+        logger.info("Sending email to: {} with subject: {} with attachment: {}", to, subject, attachmentName);
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
@@ -55,6 +62,11 @@ public class MailService {
             helper.setCc(cc);
             helper.setSubject(subject);
             helper.setText(html, true);
+
+            if (attachment != null && attachmentName != null) {
+                InputStreamSource source = new ByteArrayResource(attachment);
+                helper.addAttachment(attachmentName, source);
+            }
 
             mailSender.send(message);
             logger.info("Email sent successfully to: {}", to);

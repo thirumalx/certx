@@ -10,6 +10,19 @@ export interface CrlCheckRunResponse {
   failed: number;
 }
 
+export interface CertificateReportItem {
+  category: string;
+  certificateId: number;
+  clientId: number | null;
+  expiryDate: string | null;
+  revokedOn: string | null;
+}
+
+export interface CertificateReportResponse {
+  message: string;
+  items: CertificateReportItem[];
+}
+
 export const schedulerService = {
   runCrlCheck: async (): Promise<CrlCheckRunResponse> => {
     const response = await fetch(`${API_BASE}/scheduler/crl-check/run`, {
@@ -17,6 +30,15 @@ export const schedulerService = {
     });
     if (!response.ok) {
       throw new Error('Failed to run CRL check');
+    }
+    return response.json();
+  },
+  generateReport: async (): Promise<CertificateReportResponse> => {
+    const response = await fetch(`${API_BASE}/scheduler/generate-report`, {
+      method: 'POST'
+    });
+    if (!response.ok) {
+      throw new Error('Failed to generate report');
     }
     return response.json();
   }

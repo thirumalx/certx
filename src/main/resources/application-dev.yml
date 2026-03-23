@@ -13,3 +13,4 @@ certx:
 
 mail:
   cc: ${MAIL_CC:racetortoise@gmail.com}
+  report-to: ${MAIL_REPORT_TO:racetortoise@gmail.com}

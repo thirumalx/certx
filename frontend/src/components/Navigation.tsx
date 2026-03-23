@@ -35,6 +35,14 @@ export function Navigation() {
               Scheduler
             </Link>
           </li>
+          <li className="nav-item">
+            <Link
+              to="/initializer"
+              className={`nav-link ${location.pathname === '/initializer' ? 'active' : ''}`}
+            >
+              Initialize
+            </Link>
+          </li>
         </ul>
       </div>
     </nav>

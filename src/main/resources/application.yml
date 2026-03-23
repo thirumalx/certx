@@ -40,3 +40,6 @@ logging:
       max-history: 10
       max-file-size: 100MB
       total-size-cap: 1GB
+
+report:
+  generate-for-next-n-days: 3000

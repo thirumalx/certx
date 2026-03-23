@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import io.github.thirumalx.dto.CRLCheckRunResponse;
 import io.github.thirumalx.scheduler.CRLCheckScheduler;
+import io.github.thirumalx.scheduler.ExpiryNotificationScheduler;
+
 
 /**
  * Endpoints to manually trigger scheduled jobs.
@@ -16,9 +18,12 @@ import io.github.thirumalx.scheduler.CRLCheckScheduler;
 public class SchedulerController {
 
     private final CRLCheckScheduler crlCheckScheduler;
+    private final ExpiryNotificationScheduler expiryNotificationScheduler;
 
-    public SchedulerController(CRLCheckScheduler crlCheckScheduler) {
+    public SchedulerController(CRLCheckScheduler crlCheckScheduler,
+            ExpiryNotificationScheduler expiryNotificationScheduler) {
         this.crlCheckScheduler = crlCheckScheduler;
+        this.expiryNotificationScheduler = expiryNotificationScheduler;
     }
 
     /**
@@ -28,4 +33,10 @@ public class SchedulerController {
     public ResponseEntity<CRLCheckRunResponse> runCrlCheck() {
         return ResponseEntity.ok(crlCheckScheduler.runCrlCheckNow());
     }
+
+    @PostMapping("/generate-report")
+    public ResponseEntity<ExpiryNotificationScheduler.CertificateReportResponse> generateReport() {
+        return ResponseEntity.ok(expiryNotificationScheduler.generateAndSendDailyReport());
+    }
+
 }

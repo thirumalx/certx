@@ -56,24 +56,64 @@
   box-shadow: none;
 }
 
-.scheduler-info-card {
-  background: linear-gradient(120deg, #ffffff 0%, #f3f7ff 100%);
-  padding: 20px 24px;
+.scheduler-tasks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.task-card {
+  background: white;
   border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  gap: 20px;
   border: 1px solid #e5e7eb;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.scheduler-info-card h3 {
-  margin: 0 0 10px 0;
-  color: #111827;
-  font-size: 18px;
+.task-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-.scheduler-info-card p {
+.task-icon {
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.report-icon {
+  background: #eff6ff;
+}
+
+.crl-icon {
+  background: #fdf2f8;
+}
+
+.task-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-content h3 {
   margin: 0;
-  color: #4b5563;
-  line-height: 1.6;
+  font-size: 18px;
+  color: #111827;
+}
+
+.task-content p {
+  margin: 0;
   font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
 }
 
 .scheduler-results {
@@ -147,6 +187,24 @@
   border: 1px solid #f5c6cb;
 }
 
+.alert-success {
+  background-color: #def7ec;
+  color: #03543f;
+  border-left-color: #84e1bc;
+  border: 1px solid #84e1bc;
+}
+
+.scheduler-run-btn.secondary {
+  background: white;
+  color: #2563eb;
+  border: 1px solid #d1d5db;
+}
+
+.scheduler-run-btn.secondary:hover:not(:disabled) {
+  background: #f9fafb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
 @media (max-width: 768px) {
   .scheduler-page {
     padding: 16px;
@@ -166,3 +224,65 @@
     align-items: flex-start;
   }
 }
+
+.scheduler-report-results {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  margin-top: 10px;
+}
+
+.scheduler-report-results h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #111827;
+}
+
+.report-table-wrapper {
+  overflow-x: auto;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.report-table th {
+  text-align: left;
+  padding: 12px;
+  background: #f9fafb;
+  color: #4b5563;
+  font-weight: 600;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.report-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #1f2937;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-expired-today {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-revoked-today {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.badge-expiring-soon {
+  background: #ecfeff;
+  color: #083344;
+}
+
