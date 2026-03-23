@@ -200,6 +200,22 @@ public class CertificateService {
     return true;
   }
 
+  @Transactional
+  public boolean updateCertificateInfo(Long id, Certificate info) {
+    logger.info("Updating certificate info for ID: {}", id);
+    if (info.getSerialNumber() != null) {
+      serialNumberAttributeDao.insert(id, info.getSerialNumber(), Attribute.METADATA_ACTIVE);
+    }
+    if (info.getIssuedOn() != null) {
+      issuedOnAttributeDao.insert(id, info.getIssuedOn().toInstant(ZoneOffset.UTC), Attribute.METADATA_ACTIVE);
+    }
+    if (info.getNotAfter() != null) {
+      notAfterAttributeDao.insert(id, info.getNotAfter().toInstant(ZoneOffset.UTC), Attribute.METADATA_ACTIVE);
+    }
+    lastTimeVerifiedOnAttributeDao.insert(id, Instant.now(), Attribute.METADATA_ACTIVE);
+    return true;
+  }
+
   public Certificate validateCertificate(String path, String password) {
     if (path == null || path.isEmpty()) {
       throw new IllegalArgumentException("Path cannot be empty");

@@ -75,6 +75,30 @@ public class CertificateViewDao extends ViewDao<Certificate> {
     }
 
     /**
+     * Find a certificate by its path from the now view.
+     */
+    public Optional<Certificate> findNowByPath(String path) {
+        String sql = "SELECT * FROM " + ViewColumns.CertificateNow.TABLE
+                + " WHERE " + ViewColumns.CertificateNow.CERTIFICATE_PATH + " = :path"
+                + " AND " + ViewColumns.CertificateNow.STATUS + " <> 'DELETED'"
+                + " ORDER BY " + ViewColumns.CertificateNow.ID + " DESC LIMIT 1";
+        return jdbc.sql(sql)
+                .param("path", path)
+                .query(rowMapper())
+                .optional();
+    }
+
+    /**
+     * Lists all unique certificate paths from the now view.
+     */
+    public List<String> findAllUniquePaths() {
+        String sql = "SELECT DISTINCT " + ViewColumns.CertificateNow.CERTIFICATE_PATH
+                + " FROM " + ViewColumns.CertificateNow.TABLE
+                + " WHERE " + ViewColumns.CertificateNow.STATUS + " <> 'DELETED'";
+        return jdbc.sql(sql).query(String.class).list();
+    }
+
+    /**
      * List certificates for a given client (by status) from the now view, with
      * pagination.
      */
