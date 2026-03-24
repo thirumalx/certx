@@ -41,7 +41,7 @@ export function CertificateManagement() {
         });
 
         // Load all clients for the sidebar
-        clientService.listClients(appId, 0, 100).then((data) => {
+        clientService.listClients(appId, 0, 5).then((data) => {
             setClients(data.content);
         }).catch(() => {
             setClients([]);

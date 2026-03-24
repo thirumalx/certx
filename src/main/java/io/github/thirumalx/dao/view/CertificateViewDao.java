@@ -75,17 +75,28 @@ public class CertificateViewDao extends ViewDao<Certificate> {
     }
 
     /**
-     * Find a certificate by its path from the now view.
+     * Find a certificate by its path from the now view, optionally filtered by application.
      */
-    public Optional<Certificate> findNowByPath(String path) {
-        String sql = "SELECT * FROM " + ViewColumns.CertificateNow.TABLE
-                + " WHERE " + ViewColumns.CertificateNow.CERTIFICATE_PATH + " = :path"
-                + " AND " + ViewColumns.CertificateNow.STATUS + " <> 'DELETED'"
-                + " ORDER BY " + ViewColumns.CertificateNow.ID + " DESC LIMIT 1";
-        return jdbc.sql(sql)
-                .param("path", path)
-                .query(rowMapper())
-                .optional();
+    public Optional<Certificate> findNowByPath(String path, Long applicationId) {
+        StringBuilder sql = new StringBuilder("SELECT nce.* FROM " + ViewColumns.CertificateNow.TABLE + " nce"
+                + " WHERE nce." + ViewColumns.CertificateNow.CERTIFICATE_PATH + " = :path"
+                + " AND nce." + ViewColumns.CertificateNow.STATUS + " <> 'DELETED'");
+
+        if (applicationId != null) {
+            sql.append(" AND EXISTS (")
+                    .append(" SELECT 1 FROM certx.ap_uses_ce_isusedby apce")
+                    .append(" WHERE apce.ce_id_isusedby = nce.").append(ViewColumns.CertificateNow.ID)
+                    .append(" AND apce.ap_id_uses = :applicationId)");
+        }
+
+        sql.append(" ORDER BY nce.").append(ViewColumns.CertificateNow.ID).append(" DESC LIMIT 1");
+
+        var query = jdbc.sql(sql.toString())
+                .param("path", path);
+        if (applicationId != null) {
+            query = query.param("applicationId", applicationId);
+        }
+        return query.query(rowMapper()).optional();
     }
 
     /**

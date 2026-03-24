@@ -15,6 +15,7 @@ export interface Client {
     mobileNumber?: string;
     status: string;
     assignedUserCount?: number;
+    certificateCount?: number;
 }
 
 export interface AssignedUser {

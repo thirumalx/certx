@@ -22,6 +22,7 @@ public class Client {
     private String mobileNumber;
     private String status;
     private Integer assignedUserCount;
+    private Integer certificateCount;
 
     @Override
     public boolean equals(Object obj) {

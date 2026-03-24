@@ -106,8 +106,8 @@ public class IntializerService {
 		String clientName = filename.contains(".") ? filename.substring(0, filename.lastIndexOf('.')) : filename;
 
 		try {
-			// Find existing certificate by path
-			Optional<Certificate> existingCert = certificateViewDao.findNowByPath(absolutePath);
+			// Find existing certificate by path and application
+			Optional<Certificate> existingCert = certificateViewDao.findNowByPath(absolutePath, applicationId);
 
 			// Extract metadata from file
 			Certificate metadata = certificateService.validateCertificate(absolutePath, null);

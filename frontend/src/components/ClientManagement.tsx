@@ -23,7 +23,6 @@ export function ClientManagement() {
     const [formError, setFormError] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize] = useState(10);
-    const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
 
     // Form state
@@ -50,7 +49,6 @@ export function ClientManagement() {
             setError(null);
             const response: PageResponse<Client> = await clientService.listClients(appId, page, pageSize, filter);
             setClients(response.content);
-            setTotalPages(response.totalPages);
             setTotalElements(response.totalElements);
             setCurrentPage(response.page);
         } catch (err) {
@@ -219,6 +217,7 @@ export function ClientManagement() {
                                             <th>Name</th>
                                             <th>Email</th>
                                             <th>Mobile</th>
+                                            <th>Certificates</th>
                                             <th>Assignees</th>
                                             {/* <th>Status</th> */}
                                             <th>Actions</th>
@@ -247,6 +246,7 @@ export function ClientManagement() {
                                                     </td>
                                                     <td>{client.email ?? '—'}</td>
                                                     <td>{client.mobileNumber ?? '—'}</td>
+                                                    <td>{client.certificateCount ?? 0}</td>
                                                     <td>{client.assignedUserCount ?? 0}</td>
                                                     {/* <td>
                                                         <span className={`status-badge status-${client.status.toLowerCase()}`}>
@@ -308,51 +308,6 @@ export function ClientManagement() {
                                         )}
                                     </tbody>
                                 </table>
-                            </div>
-
-                            <div className="pagination">
-                                <button
-                                    className="btn btn-sm btn-outline"
-                                    onClick={() => loadClients(currentPage - 1)}
-                                    disabled={currentPage === 0 || loading}
-                                >
-                                    Previous
-                                </button>
-
-                                <div className="page-numbers">
-                                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                        let pageNum = i;
-                                        if (totalPages > 5) {
-                                            if (currentPage > 2) pageNum = currentPage - 2 + i;
-                                            if (pageNum >= totalPages) pageNum = totalPages - 5 + i;
-                                            if (pageNum < 0) pageNum = i;
-                                        }
-                                        if (pageNum >= totalPages) return null;
-
-                                        return (
-                                            <button
-                                                key={pageNum}
-                                                className={`page-btn ${currentPage === pageNum ? 'active' : ''}`}
-                                                onClick={() => loadClients(pageNum)}
-                                                disabled={loading}
-                                            >
-                                                {pageNum + 1}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                <button
-                                    className="btn btn-sm btn-outline"
-                                    onClick={() => loadClients(currentPage + 1)}
-                                    disabled={currentPage >= totalPages - 1 || loading}
-                                >
-                                    Next
-                                </button>
-
-                                <span className="page-info">
-                                    Page {currentPage + 1} of {Math.max(1, totalPages)} ({totalElements} items)
-                                </span>
                             </div>
                         </>
                     )}
