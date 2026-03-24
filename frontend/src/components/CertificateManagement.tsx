@@ -28,7 +28,6 @@ export function CertificateManagement() {
     const [searchTerm, setSearchTerm] = useState('');
     const [paging, setPaging] = useState({ page: 0, size: 10, total: 0 });
     const [activeFilter, setActiveFilter] = useState('ALL');
-    const [clients, setClients] = useState<Client[]>([]);
     const [expandedNotifications, setExpandedNotifications] = useState<Record<number, any[]>>({});
     const [loadingNotifications, setLoadingNotifications] = useState<Record<number, boolean>>({});
 
@@ -38,13 +37,6 @@ export function CertificateManagement() {
             setClientName(c?.name ?? `Client #${cId}`);
         }).catch(() => {
             setClientName(`Client #${cId}`);
-        });
-
-        // Load all clients for the sidebar
-        clientService.listClients(appId, 0, 5).then((data) => {
-            setClients(data.content);
-        }).catch(() => {
-            setClients([]);
         });
     }, [appId, cId]);
 
@@ -210,19 +202,6 @@ export function CertificateManagement() {
                             </li>
                         </ul>
 
-                        <h3 className="filter-title" style={{ marginTop: '30px' }}>Clients</h3>
-                        <ul className="filter-list">
-                            {clients.map((client) => (
-                                <li key={client.id}>
-                                    <button
-                                        className={`filter-btn ${cId === client.id ? 'active' : ''}`}
-                                        onClick={() => navigate(`/applications/${appId}/clients/${client.id}/certificates`)}
-                                    >
-                                        {client.name}
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
                     </nav>
                 </aside>
 

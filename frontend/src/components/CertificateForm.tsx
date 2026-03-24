@@ -156,7 +156,7 @@ export function CertificateForm({
                                 {!readOnly && (
                                     <button
                                         type="button"
-                                        className={`btn-action btn-large ${validationStatus}`}
+                                        className={`btn-action btn-small ${validationStatus}`}
                                         onClick={handleValidate}
                                         disabled={isValidating || loading}
                                     >
