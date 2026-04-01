@@ -49,7 +49,12 @@ public class MailService {
 
     @Async
     public void sendEmail(String to, String subject, String templateName, Map<String, Object> model, String attachmentName, byte[] attachment) {
-        logger.info("Sending email to: {} with subject: {} with attachment: {}", to, subject, attachmentName);
+        sendEmail(to, cc, subject, templateName, model, attachmentName, attachment);
+    }
+
+    @Async
+    public void sendEmail(String to, String cc, String subject, String templateName, Map<String, Object> model, String attachmentName, byte[] attachment) {
+        logger.info("Sending email to: {} (CC: {}) with subject: {} with attachment: {}", to, cc, subject, attachmentName);
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
@@ -58,8 +63,18 @@ public class MailService {
             Template template = freemarkerConfig.getTemplate(templateName);
             String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
 
-            helper.setTo(to);
-            helper.setCc(cc);
+            if (to.contains(",")) {
+                helper.setTo(to.split(","));
+            } else {
+                helper.setTo(to);
+            }
+            if (cc != null && !cc.isBlank()) {
+                if (cc.contains(",")) {
+                    helper.setCc(cc.split(","));
+                } else {
+                    helper.setCc(cc);
+                }
+            }
             helper.setSubject(subject);
             helper.setText(html, true);
 

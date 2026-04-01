@@ -26,6 +26,7 @@ import io.github.thirumalx.dto.Certificate;
 import io.github.thirumalx.model.Knot;
 import io.github.thirumalx.service.CertificateService;
 import io.github.thirumalx.service.CRLService;
+import io.github.thirumalx.service.NotificationService;
 import io.github.thirumalx.service.PasswordCryptoService;
 
 /**
@@ -46,15 +47,18 @@ public class CRLCheckScheduler {
     private final CertificateViewDao certificateViewDao;
     private final CertificateService certificateService;
     private final CRLService crlService;
+    private final NotificationService notificationService;
     private final PasswordCryptoService passwordCryptoService;
 
     public CRLCheckScheduler(CertificateViewDao certificateViewDao,
             CertificateService certificateService,
             CRLService crlService,
+            NotificationService notificationService,
             PasswordCryptoService passwordCryptoService) {
         this.certificateViewDao = certificateViewDao;
         this.certificateService = certificateService;
         this.crlService = crlService;
+        this.notificationService = notificationService;
         this.passwordCryptoService = passwordCryptoService;
     }
 
@@ -114,6 +118,7 @@ public class CRLCheckScheduler {
                     certificateService.markAsRevoked(cert.getId(), Instant.now());
                     revokedCount++;
                     logs.add(new CRLCheckRunResponse.CertificateLog(cert.getSerialNumber(), "REVOKED", "Certificate found in CRL"));
+                    notificationService.sendRevocationNotification(cert.getId());
                 } else {
                     logs.add(new CRLCheckRunResponse.CertificateLog(cert.getSerialNumber(), "SUCCESS", "Certificate is valid"));
                 }

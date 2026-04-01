@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +47,9 @@ public class NotificationService {
         private final ClientViewDao clientViewDao;
         private final UserViewDao userViewDao;
         private final JdbcClient jdbc;
+
+        @Value("${mail.cc}")
+        private String mailCc;
 
         public NotificationService(NotificationAnchorDao notificationAnchorDao,
                         NotificationSentAtAttributeDao sentAtAttributeDao,
@@ -140,7 +144,50 @@ public class NotificationService {
                 return notificationId;
         }
 
-        public List<Notification> getNotificationsByCertificate(Long certificateId) {
+        @Transactional
+        public void sendRevocationNotification(Long certificateId) {
+                logger.info("Sending revocation notification for certificate {}", certificateId);
+                Certificate certificate = certificateViewDao.findNowById(certificateId).orElse(null);
+                if (certificate == null) {
+                        return;
+                }
+
+                List<Client> clients = clientViewDao.listByCertificate(certificateId);
+                Set<String> toEmails = new LinkedHashSet<>();
+                for (Client client : clients) {
+                        if (client.getEmail() != null && !client.getEmail().isBlank()) {
+                                toEmails.add(client.getEmail().toLowerCase());
+                        }
+                        List<User> assignedUsers = userViewDao.listAssignedToClient(client.getId());
+                        for (User user : assignedUsers) {
+                                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                                        toEmails.add(user.getEmail().toLowerCase());
+                                }
+                        }
+                }
+
+                Map<String, Object> model = new HashMap<>();
+                model.put("serialNumber", certificate.getSerialNumber());
+                model.put("revokedOn",
+                                certificate.getRevokedOn() != null ? certificate.getRevokedOn().toString() : "N/A");
+                model.put("path", certificate.getPath());
+
+                String subject = "Certificate Revocation Alert - " + certificate.getSerialNumber();
+                String templateName = "revocation-notification.ftl";
+
+                if (toEmails.isEmpty()) {
+                        logger.warn("No client or assigned user email found for certificate {}. Moving CC to TO.",
+                                        certificateId);
+                        if (mailCc != null && !mailCc.isBlank()) {
+                                mailService.sendEmail(mailCc, null, subject, templateName, model, null, null);
+                        }
+                } else {
+                        String to = String.join(",", toEmails);
+                        mailService.sendEmail(to, mailCc, subject, templateName, model, null, null);
+                }
+        }
+
+    public List<Notification> getNotificationsByCertificate(Long certificateId) {
                 return jdbc
                                 .sql("""
                                                 SELECT nt.nt_id, snt.nt_snt_notification_sentat, rec.nt_rec_notification_remaindercount, ties.ce_id_isnotifiedby, tcl.cl_id_receives

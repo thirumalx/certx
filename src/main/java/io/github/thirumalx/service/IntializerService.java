@@ -12,10 +12,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.github.thirumalx.dao.tie.ApplicationCertificateTieDao;
+import io.github.thirumalx.dao.tie.CertificateClientTieDao;
 import io.github.thirumalx.dao.view.CertificateViewDao;
 import io.github.thirumalx.dto.Certificate;
 import io.github.thirumalx.dto.Client;
 import io.github.thirumalx.dto.InitializerResponse;
+import io.github.thirumalx.model.tie.ApplicationCertificate;
+import io.github.thirumalx.model.tie.CertificateClient;
 
 /**
  * @author Thirumal M
@@ -30,12 +34,17 @@ public class IntializerService {
 	private final CertificateService certificateService;
 	private final CertificateViewDao certificateViewDao;
 	private final ClientService clientService;
+	private final CertificateClientTieDao certificateClientTieDao;
+	private final ApplicationCertificateTieDao applicationCertificateTieDao;
 
 	public IntializerService(CertificateService certificateService, CertificateViewDao certificateViewDao,
-			ClientService clientService) {
+			ClientService clientService, CertificateClientTieDao certificateClientTieDao, 
+			ApplicationCertificateTieDao applicationCertificateTieDao) {
 		this.certificateService = certificateService;
 		this.certificateViewDao = certificateViewDao;
 		this.clientService = clientService;
+		this.certificateClientTieDao = certificateClientTieDao;
+		this.applicationCertificateTieDao = applicationCertificateTieDao;
 	}
 
 	/**
@@ -119,10 +128,33 @@ public class IntializerService {
 						|| !metadata.getNotAfter().equals(current.getNotAfter());
 
 				if (needsUpdate) {
-					logger.info("Updating existing certificate at {}. New Serial: {}", absolutePath,
-							metadata.getSerialNumber());
-					certificateService.updateCertificateInfo(current.getId(), metadata);
-					logs.add("UPDATED: " + absolutePath + " (Serial: " + metadata.getSerialNumber() + ")");
+					logger.info("Updating existing certificate at {}. New Serial: {} (Current ID: {})", absolutePath,
+							metadata.getSerialNumber(), current.getId());
+					
+					// 1. Get client ID and application ID (if missing) from existing ties
+					List<CertificateClient> clientTies = certificateClientTieDao.findByAnchor1Id(current.getId());
+					if (clientTies.isEmpty()) {
+						throw new IllegalStateException("Could not find client for certificate ID: " + current.getId());
+					}
+					Long clientId = clientTies.get(0).getClientId();
+					
+					Long resolvedAppId = applicationId;
+					if (resolvedAppId == null) {
+						List<ApplicationCertificate> appTies = applicationCertificateTieDao.findByAnchor2Id(current.getId());
+						if (appTies.isEmpty()) {
+							throw new IllegalStateException("Could not find application for certificate ID: " + current.getId());
+						}
+						resolvedAppId = appTies.get(0).getApplicationId();
+					}
+
+					// 2. Soft delete the current record
+					certificateService.delete(current.getId());
+
+					// 3. Insert new record with updated metadata
+					metadata.setPath(absolutePath);
+					certificateService.save(resolvedAppId, clientId, metadata);
+
+					logs.add("UPDATED (REPLACED): " + absolutePath + " (Serial: " + metadata.getSerialNumber() + ")");
 					stats.updated++;
 				} else {
 					logger.debug("Certificate at {} is already up to date.", absolutePath);

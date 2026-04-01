@@ -109,4 +109,14 @@ public class ClientViewDao extends ViewDao<Client> {
 
         return sql.toString();
     }
+
+    public java.util.List<Client> listByCertificate(Long certificateId) {
+        String sql = selectWithCounts(null) +
+                " JOIN " + TieColumns.CertificateClientOwns.TABLE + " tie ON v." + ViewColumns.ClientNow.ID + " = tie." + TieColumns.CertificateClientOwns.ANCHOR2 +
+                " WHERE tie." + TieColumns.CertificateClientOwns.ANCHOR1 + " = :certificateId";
+        return jdbc.sql(sql)
+                .param("certificateId", certificateId)
+                .query(rowMapper())
+                .list();
+    }
 }
