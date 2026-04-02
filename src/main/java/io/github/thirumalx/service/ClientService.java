@@ -256,14 +256,14 @@ public class ClientService {
         return clientViewDao.findNowByUniqueId(normalized);
     }
 
-    public PageResponse<Client> listClient(Long applicationId, PageRequest pageRequest, String statusString) {
-        logger.debug("Listing clients for the application {} with status {} from page {} with size {}", applicationId,
-                statusString,
+    public PageResponse<Client> listClient(Long applicationId, PageRequest pageRequest, String statusString, String search) {
+        logger.debug("Listing clients for the application {} with status {} and search {} from page {} with size {}", applicationId,
+                statusString, search,
                 pageRequest.page(), pageRequest.size());
         Long status = Knot.getIdFromDescription(statusString);
-        List<Client> clients = clientViewDao.listNow(applicationId, status, pageRequest.page(),
+        List<Client> clients = clientViewDao.listNow(applicationId, status, search, pageRequest.page(),
                 pageRequest.size());
-        long totalElements = clientViewDao.countNow(applicationId, status);
+        long totalElements = clientViewDao.countNow(applicationId, status, search);
         int totalPages = (int) Math.ceil((double) totalElements / pageRequest.size());
         return new PageResponse<>(pageRequest.page(), pageRequest.size(), clients, totalElements, totalPages);
     }

@@ -72,8 +72,9 @@ public class ClientController {
 
     @GetMapping()
     public ResponseEntity<PageResponse<Client>> listClient(@PathVariable Long applicationId,
-            @Valid PageRequest pageRequest, @RequestParam(required = false, defaultValue = "ALL") String status) {
-        return ResponseEntity.ok(clientService.listClient(applicationId, pageRequest, status));
+            @Valid PageRequest pageRequest, @RequestParam(required = false, defaultValue = "ALL") String status,
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(clientService.listClient(applicationId, pageRequest, status, search));
     }
 
     @DeleteMapping("/{id}")

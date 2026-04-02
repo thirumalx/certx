@@ -34,12 +34,13 @@ public class ClientViewDao extends ViewDao<Client> {
                 .optional();
     }
 
-    public java.util.List<Client> listNow(Long applicationId, Long status, int page, int size) {
+    public java.util.List<Client> listNow(Long applicationId, Long status, String search, int page, int size) {
         String sql = selectWithCounts(applicationId) +
                 " JOIN " + TieColumns.ApplicationClientServedby.TABLE + " t ON v." + ViewColumns.ClientNow.ID
                 + " = t." + TieColumns.ApplicationClientServedby.ANCHOR2 + " " +
                 "WHERE t." + TieColumns.ApplicationClientServedby.ANCHOR1 + " = :applicationId" +
                 (status != null ? " AND v." + ViewColumns.ClientNow.STATUS_ID_COL + " = :status " : "") +
+                (search != null && !search.isBlank() ? " AND (v." + ViewColumns.ClientNow.NAME + " ILIKE :search OR v." + ViewColumns.ClientNow.UNIQUE_ID + " ILIKE :search OR v." + ViewColumns.ClientNow.EMAIL + " ILIKE :search OR v." + ViewColumns.ClientNow.MOBILE_NUMBER + " ILIKE :search) " : "") +
                 " ORDER BY v." + ViewColumns.ClientNow.ID + " LIMIT :limit OFFSET :offset";
         var query = jdbc.sql(sql)
                 .param("applicationId", applicationId)
@@ -48,19 +49,26 @@ public class ClientViewDao extends ViewDao<Client> {
         if (status != null) {
             query = query.param("status", status);
         }
+        if (search != null && !search.isBlank()) {
+            query = query.param("search", "%" + search + "%");
+        }
         return query.query(rowMapper()).list();
     }
 
-    public long countNow(Long applicationId, Long status) {
+    public long countNow(Long applicationId, Long status, String search) {
         String sql = "SELECT count(*) FROM " + ViewColumns.ClientNow.TABLE + " v " +
                 "JOIN " + TieColumns.ApplicationClientServedby.TABLE + " t ON v." + ViewColumns.ClientNow.ID + " = t."
                 + TieColumns.ApplicationClientServedby.ANCHOR2 + " " +
                 "WHERE t." + TieColumns.ApplicationClientServedby.ANCHOR1 + " = :applicationId" +
-                (status != null ? " AND v." + ViewColumns.ClientNow.STATUS_ID_COL + " = :status " : "");
+                (status != null ? " AND v." + ViewColumns.ClientNow.STATUS_ID_COL + " = :status " : "") +
+                (search != null && !search.isBlank() ? " AND (v." + ViewColumns.ClientNow.NAME + " ILIKE :search OR v." + ViewColumns.ClientNow.UNIQUE_ID + " ILIKE :search OR v." + ViewColumns.ClientNow.EMAIL + " ILIKE :search OR v." + ViewColumns.ClientNow.MOBILE_NUMBER + " ILIKE :search) " : "");
         var query = jdbc.sql(sql)
                 .param("applicationId", applicationId);
         if (status != null) {
             query = query.param("status", status);
+        }
+        if (search != null && !search.isBlank()) {
+            query = query.param("search", "%" + search + "%");
         }
         return query.query(Long.class)
                 .single();

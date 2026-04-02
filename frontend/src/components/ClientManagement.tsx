@@ -24,6 +24,8 @@ export function ClientManagement() {
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize] = useState(10);
     const [totalElements, setTotalElements] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [goToPageInput, setGoToPageInput] = useState('1');
 
     // Form state
     const [showForm, setShowForm] = useState(false);
@@ -32,7 +34,16 @@ export function ClientManagement() {
 
     // Search & filter state
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [selectedFilter, setSelectedFilter] = useState<FilterStatus>('All');
+
+    // Debounce search term
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
     // Load application name for heading
     useEffect(() => {
@@ -43,18 +54,31 @@ export function ClientManagement() {
         });
     }, [appId]);
 
-    const loadClients = async (page: number = 0, filter: FilterStatus = selectedFilter) => {
+    const loadClients = async (
+        page: number = 0,
+        filter: FilterStatus = selectedFilter,
+        search: string = debouncedSearchTerm
+    ) => {
         try {
             setLoading(true);
             setError(null);
-            const response: PageResponse<Client> = await clientService.listClients(appId, page, pageSize, filter);
+            const response: PageResponse<Client> = await clientService.listClients(
+                appId,
+                page,
+                pageSize,
+                filter,
+                search
+            );
             setClients(response.content);
             setTotalElements(response.totalElements);
+            setTotalPages(response.totalPages);
             setCurrentPage(response.page);
+            setGoToPageInput((response.page + 1).toString());
         } catch (err) {
             let errorMessage = 'Failed to load clients';
             if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-                errorMessage = 'Cannot connect to backend API. Make sure the server is running on http://localhost:8080';
+                errorMessage =
+                    'Cannot connect to backend API. Make sure the server is running on http://localhost:8080';
             } else if (err instanceof Error) {
                 errorMessage = err.message;
             }
@@ -65,8 +89,8 @@ export function ClientManagement() {
     };
 
     useEffect(() => {
-        loadClients(0);
-    }, [appId, pageSize, selectedFilter]);
+        loadClients(0, selectedFilter, debouncedSearchTerm);
+    }, [appId, pageSize, selectedFilter, debouncedSearchTerm]);
 
     const handleFormSubmit = async (formData: Client) => {
         try {
@@ -122,17 +146,23 @@ export function ClientManagement() {
     const navigateToCertificates = (clientId: number) => {
         navigate(`/applications/${appId}/clients/${clientId}/certificates`);
     };
+    
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 0 && newPage < totalPages) {
+            loadClients(newPage);
+        }
+    };
 
-    const filteredClients = clients.filter((c) => {
-        const matchesSearch =
-            c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (c.uniqueId ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (c.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (c.mobileNumber ?? '').toLowerCase().includes(searchTerm.toLowerCase());
-
-        if (selectedFilter === 'All') return matchesSearch;
-        return matchesSearch && c.status.toLowerCase() === selectedFilter.toLowerCase();
-    });
+    const handleGoToPageSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const pageNum = parseInt(goToPageInput, 10);
+        if (!isNaN(pageNum) && pageNum > 0 && pageNum <= totalPages) {
+            loadClients(pageNum - 1);
+        } else {
+            alert(`Please enter a valid page number between 1 and ${totalPages}`);
+            setGoToPageInput((currentPage + 1).toString());
+        }
+    };
 
     const filterOptions: FilterStatus[] = ['All', 'Active', 'Deleted'];
 
@@ -184,9 +214,9 @@ export function ClientManagement() {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="search-input"
                             />
-                            <span className="result-count">
-                                {filteredClients.length} of {totalElements} clients
-                            </span>
+                             <span className="result-count">
+                                 {clients.length} of {totalElements} clients
+                             </span>
                         </div>
 
                         <button
@@ -224,8 +254,8 @@ export function ClientManagement() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredClients.length > 0 ? (
-                                            filteredClients.map((client) => (
+                                         {clients.length > 0 ? (
+                                             clients.map((client) => (
                                                 <tr
                                                     key={client.id}
                                                     className={`status-${client.status.toLowerCase()}`}
@@ -309,6 +339,66 @@ export function ClientManagement() {
                                     </tbody>
                                 </table>
                             </div>
+
+                            {totalPages > 1 && (
+                                <div className="pagination">
+                                    <button
+                                        className="btn btn-sm btn-outline pagination-btn"
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 0 || loading}
+                                    >
+                                        Previous
+                                    </button>
+
+                                    <div className="page-numbers">
+                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            let pageNum = i;
+                                            if (totalPages > 5) {
+                                                if (currentPage > 2) pageNum = currentPage - 2 + i;
+                                                if (pageNum >= totalPages) pageNum = totalPages - 5 + i;
+                                                if (pageNum < 0) pageNum = i;
+                                            }
+                                            if (pageNum >= totalPages) return null;
+
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    className={`page-btn ${currentPage === pageNum ? 'active' : ''}`}
+                                                    onClick={() => handlePageChange(pageNum)}
+                                                    disabled={loading}
+                                                >
+                                                    {pageNum + 1}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <button
+                                        className="btn btn-sm btn-outline pagination-btn"
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage >= totalPages - 1 || loading}
+                                    >
+                                        Next
+                                    </button>
+
+                                    <span className="page-info">
+                                        Page <strong>{currentPage + 1}</strong> of {totalPages}
+                                    </span>
+
+                                    <form className="go-to-page-inline" onSubmit={handleGoToPageSubmit}>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max={totalPages}
+                                            value={goToPageInput}
+                                            onChange={(e) => setGoToPageInput(e.target.value)}
+                                            className="page-input-inline"
+                                            placeholder="Go to..."
+                                        />
+                                        <button type="submit" className="btn btn-sm btn-primary">Go</button>
+                                    </form>
+                                </div>
+                            )}
                         </>
                     )}
 
